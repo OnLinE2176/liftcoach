@@ -1,0 +1,30 @@
+graph LR
+    subgraph CLIENT["Client Device"]
+        BROWSER["Web Browser<br/>Renders Application UI"]
+        CAMERA["Device Camera<br/>Webcam for Live Recording"]
+    end
+
+    subgraph CLOUD["Cloud Platform (Railway)"]
+        subgraph STREAMLIT["Application Server Container"]
+            direction TB
+            FRONTEND["Frontend Rendering<br/>HTML, JS, CSS"]
+            BACKEND["Backend Logic<br/>Authentication, Routing, Admin"]
+            MEDIAPIPE_PROC["Pose Estimation<br/>MediaPipe Landmark Detection"]
+            OPENCV_PROC["Video Processing<br/>Annotation and Output"]
+        end
+    end
+
+    subgraph SERVICES["Cloud Services"]
+        direction TB
+        SUPABASE[("Supabase PostgreSQL<br/>Managed Database")]
+        R2["Cloudflare R2<br/>Object Storage<br/>Videos and Photos"]
+    end
+
+    CAMERA -->|"getUserMedia<br/>MediaRecorder API"| BROWSER
+    BROWSER <-->|"WebSocket<br/>HTTPS"| FRONTEND
+    FRONTEND <--> BACKEND
+    BACKEND <--> MEDIAPIPE_PROC
+    MEDIAPIPE_PROC --> OPENCV_PROC
+    BACKEND <-->|"SQL Queries<br/>Supabase Client"| SUPABASE
+    OPENCV_PROC -->|"Upload Analyzed Video<br/>S3-Compatible API"| R2
+    BACKEND -->|"Read/Write Files<br/>Pre-signed URLs"| R2

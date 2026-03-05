@@ -1,0 +1,107 @@
+graph TB
+    subgraph CLIENT["Client Layer"]
+        direction TB
+        UI["Streamlit-Rendered UI<br/>HTML, JS, CSS"]
+        THEME["Dark Glassmorphism<br/>Theme Module"]
+        WEBCAM["Live Recorder Component<br/>Browser Webcam Capture"]
+    end
+
+    subgraph SERVER["Application Server (Railway)"]
+        direction TB
+        
+        subgraph AUTH["Authentication and Security"]
+            LOGIN["Login Module<br/>Password Hashing"]
+            LOCKOUT["Lockout Policy<br/>Auto-Deactivation"]
+            FORCE_RESET["Forced Password Reset<br/>Post-Reactivation"]
+            REGISTER["User Registration"]
+        end
+
+        subgraph PAGES["Page Router"]
+            HOME["Home Dashboard"]
+            ANALYZE["Analysis Page"]
+            GALLERY["Gallery View<br/>List and Detail"]
+            PROFILE["User Profile<br/>Athlete Details"]
+        end
+
+        subgraph ADMIN["Admin Panel"]
+            ADMIN_DASH["Admin Dashboard<br/>Statistics Overview"]
+            ADMIN_USERS["User Management<br/>Account Control"]
+            ADMIN_SETTINGS["Application Settings<br/>Configuration"]
+        end
+
+        subgraph SUPERADMIN["Super Admin Panel"]
+            SA_ADMIN_MGMT["Admin Management<br/>Accounts and Permissions"]
+            SA_SYS_CONFIG["System Configuration<br/>Global Settings"]
+            SA_AUDIT["Complete Audit Trails<br/>System History"]
+            SA_DB_MGMT["Database Management<br/>Data Integrity"]
+        end
+
+        subgraph ENGINE["Analysis Engine"]
+            INPUT["Video Input<br/>Upload or Live Recording"]
+            MEDIAPIPE["MediaPipe Pose Landmarker<br/>33 Landmarks Per Frame"]
+            KINEMATICS["Kinematics Computation<br/>Joint Angle Extraction"]
+            BARPATH["Bar Path Tracking<br/>Deviation Analysis"]
+            PHASES["Phase Detection<br/>Lift Start to End of Pull"]
+            FAULTS["Fault Analysis<br/>Parameter Evaluation"]
+            COMPARISON["Standard Guidelines<br/>Comparison Engine"]
+            FEEDBACK["Coaching Feedback<br/>Generator"]
+        end
+
+        subgraph VIDEO_OUT["Video Output"]
+            OPENCV["Video Writer<br/>Pose Overlay and Phase Markers"]
+        end
+    end
+
+    subgraph DATABASE["Cloud Data Layer"]
+        direction TB
+        SUPABASE[("Supabase PostgreSQL")]
+        
+        subgraph TABLES["Database Tables"]
+            T_USERS["Users Table<br/>Auth, Profile, Lockout"]
+            T_SESSIONS["Sessions Table<br/>Analysis History"]
+            T_GALLERY["Gallery Table<br/>Saved Analyses"]
+            T_SETTINGS["Settings Table<br/>App Configuration"]
+            T_AUDIT["Audit Logs Table<br/>Action History"]
+        end
+
+        subgraph CLOUDSTORAGE["Cloud Object Storage (Cloudflare R2)"]
+            R2_PHOTOS["Profile Photos Bucket"]
+            R2_OUTPUT["Analyzed Videos Bucket"]
+        end
+    end
+
+    UI <-->|"WebSocket"| SERVER
+    THEME --> UI
+    WEBCAM -->|"Base64 Video"| UI
+
+    LOGIN --> LOCKOUT
+    LOCKOUT -->|"Threshold Reached"| ADMIN_USERS
+    FORCE_RESET -->|"Password Set"| HOME
+
+    ANALYZE --> INPUT
+    INPUT --> MEDIAPIPE
+    MEDIAPIPE --> KINEMATICS
+    KINEMATICS --> BARPATH
+    KINEMATICS --> PHASES
+    PHASES --> FAULTS
+    BARPATH --> FAULTS
+    FAULTS --> COMPARISON
+    COMPARISON --> FEEDBACK
+    MEDIAPIPE --> OPENCV
+    OPENCV -->|"Upload to R2"| R2_OUTPUT
+
+    FEEDBACK -->|"Save to Gallery"| GALLERY
+
+    AUTH -->|"Supabase API"| SUPABASE
+    PAGES -->|"Supabase API"| SUPABASE
+    ADMIN -->|"Supabase API"| SUPABASE
+    SUPERADMIN -->|"Supabase API"| SUPABASE
+    ENGINE -->|"Save Session"| SUPABASE
+    SUPABASE --- T_USERS
+    SUPABASE --- T_SESSIONS
+    SUPABASE --- T_GALLERY
+    SUPABASE --- T_SETTINGS
+    SUPABASE --- T_AUDIT
+    PROFILE -->|"Upload Photo to R2"| R2_PHOTOS
+    SA_AUDIT -->|"Read Logs"| T_AUDIT
+    SA_ADMIN_MGMT -->|"Manage Admins"| T_USERS

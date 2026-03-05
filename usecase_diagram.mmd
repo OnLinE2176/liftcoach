@@ -1,0 +1,69 @@
+graph TB
+    subgraph SYSTEM["LiftCoach AI Web Application"]
+        UC1["Register / Login"]
+        UC2["Upload Video<br/>for Analysis"]
+        UC3["Record Live Video<br/>via Webcam"]
+        UC4["View Analysis Results<br/>and Coaching Feedback"]
+        UC5["Save Analysis<br/>to Gallery"]
+        UC6["View Gallery<br/>History"]
+        UC7["Edit Profile<br/>Athlete Details and Photo"]
+        UC8["Forced Password Reset<br/>After Reactivation"]
+        UC9["View Admin Dashboard<br/>Statistics"]
+        UC10["Manage Users<br/>Activate / Deactivate"]
+        UC11["Configure App<br/>Settings"]
+        UC12["Manage Administrator<br/>Accounts and Permissions"]
+        UC13["System Configuration<br/>Global Settings"]
+        UC14["View Complete<br/>Audit Trails"]
+        UC15["Database<br/>Management"]
+    end
+
+    USER(("Regular User"))
+    ADMIN(("Admin"))
+    SUPERADMIN(("Super Admin"))
+
+    USER --> UC1
+    USER --> UC2
+    USER --> UC3
+    USER --> UC4
+    USER --> UC5
+    USER --> UC6
+    USER --> UC7
+    USER --> UC8
+
+    ADMIN --> UC1
+    ADMIN --> UC9
+    ADMIN --> UC10
+    ADMIN --> UC11
+
+    SUPERADMIN --> UC1
+    SUPERADMIN --> UC12
+    SUPERADMIN --> UC13
+    SUPERADMIN --> UC14
+    SUPERADMIN --> UC15
+
+    %% Styling - Dark theme
+    %% Actor nodes
+    style USER fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style ADMIN fill:#E8A87C,stroke:#D4956A,stroke-width:2px,color:#1E1E3F
+    style SUPERADMIN fill:#F8B4C8,stroke:#E091A8,stroke-width:2px,color:#1E1E3F
+
+    %% User use cases
+    style UC1 fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style UC2 fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style UC3 fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style UC4 fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style UC5 fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style UC6 fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style UC7 fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style UC8 fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+
+    %% Admin use cases
+    style UC9 fill:#E8A87C,stroke:#D4956A,stroke-width:2px,color:#1E1E3F
+    style UC10 fill:#E8A87C,stroke:#D4956A,stroke-width:2px,color:#1E1E3F
+    style UC11 fill:#E8A87C,stroke:#D4956A,stroke-width:2px,color:#1E1E3F
+
+    %% Super Admin use cases
+    style UC12 fill:#F8B4C8,stroke:#E091A8,stroke-width:2px,color:#1E1E3F
+    style UC13 fill:#F8B4C8,stroke:#E091A8,stroke-width:2px,color:#1E1E3F
+    style UC14 fill:#F8B4C8,stroke:#E091A8,stroke-width:2px,color:#1E1E3F
+    style UC15 fill:#F8B4C8,stroke:#E091A8,stroke-width:2px,color:#1E1E3F

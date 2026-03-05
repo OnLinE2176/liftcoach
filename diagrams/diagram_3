@@ -1,0 +1,47 @@
+graph TD
+    A([Launch Web App]) --> B{Have an Account?}
+    B -- No --> C[Register]
+    C --> D[Login]
+    B -- Yes --> D
+    
+    D --> E{User Role?}
+    
+    %% Admin Flow
+    E -- Admin --> F[Admin Dashboard]
+    F --> G[Content Management System <br> Update Logo, Theme, Lessons]
+    F --> H[User Management <br> Deactivate / Soft-Delete]
+    
+    %% Regular User Flow
+    E -- Regular User --> I[Access LiftCoach Web App]
+    I --> J[Home Interface]
+    
+    J --> K[Profile]
+    K --> L[Edit Profile]
+    L --> J
+    
+    J --> M[View Gallery]
+    M --> J
+    
+    J --> N[Select Input Mode]
+    
+    N --> O[Live Camera]
+    N --> P[Upload Video]
+    
+    O --> Q[Perform Lift <br> Snatch / Clean & Jerk]
+    Q --> R[Capture Set <br> Auto-Calibration]
+    
+    P --> S[Select File]
+    S --> T[Process File]
+    
+    R --> U[Analysis View <br> Skeleton / Ghost Overlay]
+    T --> U
+    
+    U --> V{Save to Gallery?}
+    V -- Yes --> W[Save Video with Input]
+    V -- No --> J
+    
+    W --> X{Do Another?}
+    X -- Yes --> N
+    X -- No --> J
+    
+    J --> Y([End Session])

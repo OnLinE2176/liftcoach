@@ -1,0 +1,79 @@
+flowchart TD
+    Start([Start]) --> SelectLift[Select Lift Type]
+    SelectLift --> InputMethod{Choose Input<br/>Method?}
+
+    InputMethod -- "Live Recording" --> StartCam[Start Camera<br/>and Record Lift]
+    StartCam --> Capture[Capture Video<br/>Using Webcam]
+    Capture --> StopRec[Stop Recording<br/>and Submit]
+    StopRec --> SendRec[Send Recorded<br/>Video to Server]
+    SendRec --> Process[Process and<br/>Prepare Video]
+
+    InputMethod -- "Upload Video" --> Upload[Upload Video<br/>From Device]
+    Upload --> Submit[Submit File<br/>to Server]
+
+    Process --> Extract[Extract Frames<br/>From Video]
+    Submit --> Extract
+
+    Extract --> Pose[Detect Body Pose<br/>in Each Frame]
+    Pose --> Filter{Is Pose<br/>Detected?}
+
+    Filter -- "No" --> LowConf[Low Confidence<br/>Warning]
+    LowConf -.-> Pose
+
+    Filter -- "Yes" --> Angles[Calculate Body<br/>Angles]
+    Angles --> Phases[Identify Lift<br/>Phases]
+    Phases --> BarPath[Track Barbell<br/>Movement Path]
+    BarPath --> Faults[Evaluate Lifting<br/>Form]
+    Faults --> Annotate[Create Annotated<br/>Video with Overlay]
+
+    Annotate --> PrintStats[Record Session<br/>Results]
+    Annotate --> SaveVid[Save Annotated<br/>Video]
+
+    SaveVid --> UploadR2[Upload Video<br/>to Cloud Storage]
+    UploadR2 --> UpdateResults
+
+    PrintStats --> UpdateResults[Display Analysis<br/>Results and Feedback]
+
+    UpdateResults --> SaveHistory{Save to<br/>Gallery?}
+
+    SaveHistory -- "No" --> Finish([End])
+
+    SaveHistory -- "Yes" --> SaveTitle[Enter Gallery<br/>Title]
+    SaveTitle --> AddDB[Save Record<br/>to Database]
+    AddDB --> Confirm[Show Success<br/>Confirmation]
+    Confirm --> Finish
+
+    %% Styling - Dark theme matching reference image
+    %% Start/End nodes - Pink/Coral
+    style Start fill:#F8B4C8,stroke:#E091A8,stroke-width:2px,color:#1E1E3F
+    style Finish fill:#F8B4C8,stroke:#E091A8,stroke-width:2px,color:#1E1E3F
+
+    %% Decision diamonds - Orange/Peach
+    style InputMethod fill:#E8A87C,stroke:#D4956A,stroke-width:2px,color:#1E1E3F
+    style Filter fill:#E8A87C,stroke:#D4956A,stroke-width:2px,color:#1E1E3F
+    style SaveHistory fill:#E8A87C,stroke:#D4956A,stroke-width:2px,color:#1E1E3F
+
+    %% Process rectangles - Purple/Blue
+    style SelectLift fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style StartCam fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Capture fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style StopRec fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style SendRec fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Process fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Upload fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Submit fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Extract fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Pose fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style LowConf fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Angles fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Phases fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style BarPath fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Faults fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Annotate fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style PrintStats fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style SaveVid fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style UploadR2 fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style UpdateResults fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style SaveTitle fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style AddDB fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style Confirm fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF

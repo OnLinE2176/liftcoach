@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    :root {
+      --bg-primary: #0a0a1a;
+      --bg-glass: rgba(15, 15, 35, 0.85);
+      --border-color: rgba(124, 58, 237, 0.25);
+      --accent: #7c3aed;
+      --accent-glow: rgba(124, 58, 237, 0.3);
+      --text-primary: #e2e8f0;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --radius: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: transparent;
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+
+    .recorder-container {
+      position: relative;
+      width: 100%;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+    }
+
+    /* ── Video viewport ─────────────────────────── */
+    .video-viewport {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: var(--radius) var(--radius) 0 0;
+      overflow: hidden;
+    }
+
+    .video-viewport video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      /* mirror for natural feel */
+    }
+
+    .video-viewport video#playback {
+      transform: scaleX(-1);
+      /* keep mirrored for playback too */
+    }
+
+    /* ── States overlay ─────────────────────────── */
+    .state-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 5;
+      transition: opacity 0.3s;
+    }
+
+    .state-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .state-icon {
+      font-size: 52px;
+      line-height: 1;
+      animation: pulse-slow 2.5s ease-in-out infinite;
+    }
+
+    .state-text {
+      font-size: 15px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 280px;
+      line-height: 1.4;
+    }
+
+    /* ── Recording indicator ────────────────────── */
+    .rec-badge {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .rec-badge.visible {
+      opacity: 1;
+    }
+
+    .rec-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: blink 1s ease-in-out infinite;
+    }
+
+    /* ── Controls bar ───────────────────────────── */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 18px 20px;
+      background: var(--bg-glass);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.01em;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-record {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+    }
+
+    .btn-record:hover {
+      box-shadow: 0 6px 24px rgba(239, 68, 68, 0.5);
+    }
+
+    .btn-stop {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+    }
+
+    .btn-stop:hover {
+      box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5);
+    }
+
+    .btn-retake {
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--text-primary);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .btn-retake:hover {
+      background: rgba(148, 163, 184, 0.25);
+    }
+
+    .btn-submit {
+      background: linear-gradient(135deg, var(--accent), #6d28d9);
+      color: #fff;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+
+    .btn-submit:hover {
+      box-shadow: 0 6px 24px rgba(124, 58, 237, 0.55);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ── Animations ─────────────────────────────── */
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    @keyframes pulse-slow {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.08);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="recorder-container" id="container">
+
+    <!-- Video viewport -->
+    <div class="video-viewport">
+      <video id="livePreview" autoplay muted playsinline></video>
+      <video id="playback" controls style="display:none"></video>
+
+      <!-- Idle overlay -->
+      <div class="state-overlay" id="idleOverlay">
+        <div class="state-icon">📹</div>
+        <div class="state-text">Camera loading…<br>Allow access when prompted.</div>
+      </div>
+
+      <!-- Recording badge -->
+      <div class="rec-badge" id="recBadge">
+        <div class="rec-dot"></div>
+        <span id="recTimer">00:00</span>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls" id="controlsBar">
+      <button class="btn btn-record" id="btnRecord" disabled>⏺ Record</button>
+      <button class="btn btn-stop" id="btnStop" style="display:none">⏹ Stop</button>
+      <button class="btn btn-retake" id="btnRetake" style="display:none">↩ Retake</button>
+      <button class="btn btn-submit" id="btnSubmit" style="display:none">🚀 Use This Recording</button>
+    </div>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════════════════════════
+    //  Streamlit Component Communication Layer
+    // ══════════════════════════════════════════════════════════
+
+    function sendMessageToStreamlit(type, data) {
+      const msg = Object.assign({ isStreamlitMessage: true, type: type }, data);
+      window.parent.postMessage(msg, "*");
+    }
+
+    function setComponentReady() {
+      sendMessageToStreamlit("streamlit:componentReady", { apiVersion: 1 });
+    }
+
+    function setComponentValue(value) {
+      sendMessageToStreamlit("streamlit:setComponentValue", { value: value });
+    }
+
+    function setFrameHeight(height) {
+      sendMessageToStreamlit("streamlit:setFrameHeight", { height: height });
+    }
+
+    // Listen for render events from Streamlit
+    window.addEventListener("message", (event) => {
+      if (event.data.type === "streamlit:render") {
+        // Component has been rendered / re-rendered
+        onStreamlitRender(event.data);
+      }
+    });
+
+    function onStreamlitRender(renderData) {
+      // Update frame height on each render
+      updateHeight();
+    }
+
+    function updateHeight() {
+      const el = document.getElementById("container");
+      if (el) {
+        setFrameHeight(el.scrollHeight);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  DOM refs
+    // ══════════════════════════════════════════════════════════
+    const livePreview = document.getElementById("livePreview");
+    const playback = document.getElementById("playback");
+    const idleOverlay = document.getElementById("idleOverlay");
+    const recBadge = document.getElementById("recBadge");
+    const recTimer = document.getElementById("recTimer");
+    const btnRecord = document.getElementById("btnRecord");
+    const btnStop = document.getElementById("btnStop");
+    const btnRetake = document.getElementById("btnRetake");
+    const btnSubmit = document.getElementById("btnSubmit");
+
+    let stream = null;
+    let recorder = null;
+    let chunks = [];
+    let timerInterval = null;
+    let seconds = 0;
+    let recordedBlob = null;
+
+    // ══════════════════════════════════════════════════════════
+    //  Camera
+    // ══════════════════════════════════════════════════════════
+    async function initCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "environment" },
+          audio: false
+        });
+        livePreview.srcObject = stream;
+        idleOverlay.classList.add("hidden");
+        btnRecord.disabled = false;
+        updateHeight();
+      } catch (err) {
+        idleOverlay.querySelector(".state-icon").textContent = "⚠️";
+        idleOverlay.querySelector(".state-text").textContent =
+          "Camera access denied or unavailable.\nPlease allow camera permissions and reload.";
+        console.error("Camera error:", err);
+        updateHeight();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  Timer
+    // ══════════════════════════════════════════════════════════
+    function startTimer() {
+      seconds = 0;
+      recTimer.textContent = "00:00";
+      timerInterval = setInterval(() => {
+        seconds++;
+        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+        const s = String(seconds % 60).padStart(2, "0");
+        recTimer.textContent = m + ":" + s;
+      }, 1000);
+    }
+    function stopTimer() { clearInterval(timerInterval); }
+
+    // ══════════════════════════════════════════════════════════
+    //  Recording
+    // ══════════════════════════════════════════════════════════
+    btnRecord.addEventListener("click", () => {
+      chunks = [];
+      const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+        ? "video/webm;codecs=vp9"
+        : MediaRecorder.isTypeSupported("video/webm")
+          ? "video/webm"
+          : "";
+
+      recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = onRecordingDone;
+      recorder.start(100);
+
+      btnRecord.style.display = "none";
+      btnStop.style.display = "inline-flex";
+      recBadge.classList.add("visible");
+      startTimer();
+    });
+
+    btnStop.addEventListener("click", () => {
+      if (recorder && recorder.state !== "inactive") recorder.stop();
+      stopTimer();
+      btnStop.style.display = "none";
+      recBadge.classList.remove("visible");
+    });
+
+    function onRecordingDone() {
+      recordedBlob = new Blob(chunks, { type: chunks[0]?.type || "video/webm" });
+      const url = URL.createObjectURL(recordedBlob);
+
+      livePreview.style.display = "none";
+      playback.src = url;
+      playback.style.display = "block";
+      playback.style.width = "100%";
+      playback.style.height = "100%";
+      playback.style.objectFit = "cover";
+
+      btnRetake.style.display = "inline-flex";
+      btnSubmit.style.display = "inline-flex";
+      updateHeight();
+    }
+
+    // ══════════════════════════════════════════════════════════
+    //  Retake
+    // ══════════════════════════════════════════════════════════
+    btnRetake.addEventListener("click", () => {
+      recordedBlob = null;
+      playback.style.display = "none";
+      playback.src = "";
+      livePreview.style.display = "block";
+
+      btnRetake.style.display = "none";
+      btnSubmit.style.display = "none";
+      btnRecord.style.display = "inline-flex";
+      updateHeight();
+    });
+
+    // ══════════════════════════════════════════════════════════
+    //  Submit
+    // ══════════════════════════════════════════════════════════
+    btnSubmit.addEventListener("click", async () => {
+      if (!recordedBlob) return;
+
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = "⏳ Sending…";
+      btnRetake.disabled = true;
+
+      try {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result.split(",")[1];
+          setComponentValue(base64);
+        };
+        reader.readAsDataURL(recordedBlob);
+      } catch (e) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "🚀 Use This Recording";
+        btnRetake.disabled = false;
+        console.error("Submit error:", e);
+      }
+    });
+
+    // ══════════════════════════════════════════════════════════
+    //  Boot
+    // ══════════════════════════════════════════════════════════
+    initCamera();
+    setComponentReady();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,38 @@
+graph TD
+    USER(("👤 User"))
+    ADMIN(("🔧 Admin"))
+    SUPERADMIN(("🛡️ Super Admin"))
+
+    USER --> INTERNET["🌐 Internet<br/>Web Browser"]
+    ADMIN --> INTERNET
+    SUPERADMIN --> INTERNET
+
+    INTERNET --> WEBAPP["🏋️ LiftCoach AI<br/>Streamlit Web Application"]
+
+    WEBAPP -->|"Analyzes Form"| MEDIAPIPE["🤖 MediaPipe<br/>Pose Landmarker<br/>(BlazePose)"]
+    MEDIAPIPE -->|"Displays Feedback"| WEBAPP
+
+    WEBAPP -->|"Stores Data"| BACKEND
+
+    subgraph BACKEND["Backend Services"]
+        direction LR
+        SUPABASE[("Supabase<br/>PostgreSQL Database<br/>Data Storage")]
+        R2["☁️ Cloudflare R2<br/>Video Upload<br/>and Storage"]
+    end
+
+    WEBAPP -->|"Video Upload"| R2
+
+    SUPERADMIN -.->|"Retrieves Data and<br/>Generates Reports"| BACKEND
+
+    %% Styling - Dark theme matching existing diagrams
+    style USER fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style ADMIN fill:#E8A87C,stroke:#D4956A,stroke-width:2px,color:#1E1E3F
+    style SUPERADMIN fill:#F8B4C8,stroke:#E091A8,stroke-width:2px,color:#1E1E3F
+
+    style INTERNET fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style WEBAPP fill:#6C5CE7,stroke:#5A4BD1,stroke-width:3px,color:#FFFFFF
+    style MEDIAPIPE fill:#E8A87C,stroke:#D4956A,stroke-width:2px,color:#1E1E3F
+
+    style SUPABASE fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style R2 fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style BACKEND fill:#2D2B55,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF

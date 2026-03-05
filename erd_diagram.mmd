@@ -1,0 +1,64 @@
+erDiagram
+    users {
+        INTEGER id PK
+        TEXT username UK
+        TEXT email UK
+        TEXT password_hash
+        TEXT full_name
+        INTEGER age
+        REAL weight_kg
+        REAL height_cm
+        TEXT gender
+        TEXT experience_level
+        TEXT preferred_lift
+        TEXT bio
+        TEXT profile_photo_url "R2 storage URL"
+        TEXT role "super_admin, admin, or user"
+        INTEGER is_active "1 = active, 0 = inactive"
+        TIMESTAMP created_at
+        INTEGER failed_login_attempts
+        TEXT locked_at
+        TEXT deactivation_reason
+        INTEGER must_reset_password
+    }
+
+    sessions {
+        INTEGER id PK
+        INTEGER user_id FK
+        TEXT lift_type "Snatch or Clean and Jerk"
+        TEXT verdict
+        TEXT faults_json "JSON array of faults"
+        TEXT kinematic_json "JSON object of angles"
+        TEXT phases_json "JSON object of phases"
+        TEXT video_url "R2 storage URL"
+        TIMESTAMP created_at
+    }
+
+    gallery {
+        INTEGER id PK
+        INTEGER session_id FK
+        INTEGER user_id FK
+        TEXT title
+        TEXT notes
+        TIMESTAMP created_at
+    }
+
+    app_settings {
+        TEXT key PK
+        TEXT value
+    }
+
+    audit_logs {
+        INTEGER id PK
+        INTEGER user_id FK
+        TEXT action "e.g. login, create, update, delete"
+        TEXT target "affected resource or entity"
+        TEXT details "additional context"
+        TIMESTAMP created_at
+    }
+
+    users ||--o{ sessions : "performs"
+    users ||--o{ gallery : "saves"
+    sessions ||--o| gallery : "saved as"
+    users }o--|| app_settings : "governed by"
+    users ||--o{ audit_logs : "generates"

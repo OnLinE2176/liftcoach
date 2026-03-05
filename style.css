@@ -1,0 +1,885 @@
+/* ═══════════════════════════════════════════════════════
+   LiftCoach AI — Premium Dark Theme
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Google Fonts ────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+/* ── CSS Variables ───────────────────────────────────── */
+:root {
+    --bg-primary: #0a0a1a;
+    --bg-secondary: #111128;
+    --bg-card: rgba(25, 25, 60, 0.6);
+    --bg-card-hover: rgba(35, 35, 80, 0.7);
+    --bg-input: rgba(20, 20, 50, 0.8);
+    --border-color: rgba(124, 58, 237, 0.2);
+    --border-hover: rgba(124, 58, 237, 0.5);
+    --accent: #7c3aed;
+    --accent-light: #a78bfa;
+    --accent-glow: rgba(124, 58, 237, 0.3);
+    --success: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.12);
+    --danger: #ef4444;
+    --danger-bg: rgba(239, 68, 68, 0.12);
+    --warning: #f59e0b;
+    --warning-bg: rgba(245, 158, 11, 0.12);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --font-body: 'Inter', -apple-system, sans-serif;
+    --font-heading: 'Outfit', 'Inter', sans-serif;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    --shadow-glow: 0 0 30px rgba(124, 58, 237, 0.15);
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Hide Streamlit Defaults ─────────────────────────── */
+#MainMenu,
+header[data-testid="stHeader"],
+footer,
+.stDeployButton,
+div[data-testid="stDecoration"],
+div[data-testid="stToolbar"],
+.viewerBadge_container__r5tak {
+    display: none !important;
+}
+
+/* ── Global Background ───────────────────────────────── */
+.stApp,
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(145deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, #0d0d2b 100%) !important;
+    font-family: var(--font-body) !important;
+    color: var(--text-primary) !important;
+}
+
+html,
+body {
+    background: var(--bg-primary) !important;
+}
+
+/* ── Remove Sidebar ──────────────────────────────────── */
+section[data-testid="stSidebar"] {
+    display: none !important;
+}
+
+[data-testid="stSidebarCollapsedControl"] {
+    display: none !important;
+}
+
+/* ── Top Navigation Bar ──────────────────────────────── */
+.nav-bar {
+    background: rgba(15, 15, 40, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.6rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    margin: -1rem -1rem 1.5rem -1rem;
+}
+
+.nav-brand {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.35rem;
+    background: linear-gradient(135deg, var(--accent-light), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: var(--transition);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-family: var(--font-body);
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--text-primary);
+    background: var(--accent-glow);
+}
+
+.nav-link.active {
+    color: var(--accent-light);
+    background: rgba(124, 58, 237, 0.18);
+}
+
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.nav-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #6d28d9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: white;
+}
+
+.nav-username {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* ── Glass Card ──────────────────────────────────────── */
+.glass-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+}
+
+.glass-card:hover {
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-2px);
+}
+
+.glass-card-static {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+/* ── Stat Card ───────────────────────────────────────── */
+.stat-card {
+    text-align: center;
+    padding: 1.25rem;
+}
+
+.stat-value {
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-light), #c4b5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+}
+
+.stat-value.success {
+    background: linear-gradient(135deg, var(--success), #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-value.danger {
+    background: linear-gradient(135deg, var(--danger), #f87171);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-value.warning {
+    background: linear-gradient(135deg, var(--warning), #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0.35rem;
+}
+
+/* ── Auth Page ────────────────────────────────────────── */
+.auth-container {
+    max-width: 420px;
+    margin: 4rem auto;
+}
+
+.auth-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-logo h1 {
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-light), var(--accent), #6d28d9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+.auth-logo p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.auth-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow), var(--shadow-glow);
+}
+
+/* ── Headings ────────────────────────────────────────── */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.stMarkdown h1,
+.stMarkdown h2,
+.stMarkdown h3 {
+    font-family: var(--font-heading) !important;
+    color: var(--text-primary) !important;
+    letter-spacing: -0.3px;
+}
+
+.page-title {
+    font-family: var(--font-heading);
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ── Streamlit Inputs ────────────────────────────────── */
+.stTextInput>div>div>input,
+.stSelectbox>div>div,
+.stTextArea textarea {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 10px !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-body) !important;
+    padding: 0.65rem 0.9rem !important;
+    transition: var(--transition) !important;
+}
+
+.stTextInput>div>div>input:focus,
+.stTextArea textarea:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px var(--accent-glow) !important;
+}
+
+.stTextInput label,
+.stSelectbox label,
+.stTextArea label,
+.stFileUploader label,
+.stRadio label,
+.stCheckbox label {
+    color: var(--text-secondary) !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+}
+
+/* ── Buttons ─────────────────────────────────────────── */
+.stButton>button {
+    background: linear-gradient(135deg, var(--accent), #6d28d9) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 0.6rem 1.5rem !important;
+    font-family: var(--font-body) !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    transition: var(--transition) !important;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3) !important;
+    width: 100%;
+}
+
+.stButton>button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 25px rgba(124, 58, 237, 0.45) !important;
+}
+
+.stButton>button:active {
+    transform: scale(0.98) !important;
+}
+
+/* Secondary/outline-style buttons via container class */
+div[data-testid="stHorizontalBlock"] .stButton>button {
+    width: auto;
+}
+
+/* ── Download button ─────────────────────────────────── */
+.stDownloadButton>button {
+    background: linear-gradient(135deg, var(--success), #059669) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-family: var(--font-body) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* ── File Uploader ───────────────────────────────────── */
+.stFileUploader>div {
+    background: var(--bg-input) !important;
+    border: 2px dashed var(--border-color) !important;
+    border-radius: var(--radius) !important;
+    transition: var(--transition) !important;
+}
+
+.stFileUploader>div:hover {
+    border-color: var(--accent) !important;
+    background: rgba(124, 58, 237, 0.05) !important;
+}
+
+/* ── Progress bar ────────────────────────────────────── */
+.stProgress>div>div>div>div {
+    background: linear-gradient(90deg, var(--accent), var(--accent-light)) !important;
+    border-radius: 10px !important;
+}
+
+.stProgress>div>div {
+    background: var(--bg-input) !important;
+    border-radius: 10px !important;
+}
+
+/* ── Metrics ─────────────────────────────────────────── */
+div[data-testid="stMetricValue"] {
+    font-family: var(--font-heading) !important;
+    color: var(--accent-light) !important;
+    font-weight: 700 !important;
+}
+
+div[data-testid="stMetricLabel"] {
+    color: var(--text-muted) !important;
+}
+
+/* ── Alerts ──────────────────────────────────────────── */
+.stAlert,
+.stSuccess,
+.stInfo,
+.stWarning,
+.stError,
+div[data-testid="stAlert"] {
+    border-radius: var(--radius) !important;
+    border-left-width: 4px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+/* ── Expanders ───────────────────────────────────────── */
+.streamlit-expanderHeader {
+    background: var(--bg-card) !important;
+    border-radius: var(--radius) !important;
+    color: var(--text-primary) !important;
+    font-weight: 500 !important;
+}
+
+/* Only override Streamlit-generated expander details, not our custom details */
+[data-testid="stExpander"] details {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius) !important;
+}
+
+/* ── Dataframe / Table ───────────────────────────────── */
+.stDataFrame,
+div[data-testid="stDataFrame"] {
+    border-radius: var(--radius) !important;
+    overflow: hidden;
+}
+
+/* ── Tabs ────────────────────────────────────────────── */
+.stTabs [data-baseweb="tab-list"] {
+    background: var(--bg-card) !important;
+    border-radius: var(--radius) !important;
+    padding: 0.25rem !important;
+    gap: 0.25rem !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px !important;
+    color: var(--text-secondary) !important;
+    font-family: var(--font-body) !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+}
+
+.stTabs [aria-selected="true"] {
+    background: var(--accent) !important;
+    color: white !important;
+}
+
+/* ── Video player ────────────────────────────────────── */
+video {
+    border-radius: var(--radius) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* ── Dividers ────────────────────────────────────────── */
+hr {
+    border-color: var(--border-color) !important;
+    opacity: 0.5;
+}
+
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+
+/* ── Verdict Badges ──────────────────────────────────── */
+.verdict-good {
+    display: inline-block;
+    background: var(--success-bg);
+    color: var(--success);
+    padding: 0.35rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.verdict-bad {
+    display: inline-block;
+    background: var(--danger-bg);
+    color: var(--danger);
+    padding: 0.35rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ── Action Cards ────────────────────────────────────── */
+.action-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.action-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-3px);
+}
+
+.action-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.action-title {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+}
+
+.action-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* ── Gallery Grid ────────────────────────────────────── */
+.gallery-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.gallery-item:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-glow);
+}
+
+.gallery-meta {
+    padding: 1rem;
+}
+
+.gallery-title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.gallery-date {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-top: 0.25rem;
+}
+
+/* ── Admin Table ─────────────────────────────────────── */
+.user-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.user-row:hover {
+    background: rgba(124, 58, 237, 0.05);
+}
+
+.status-active {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+.status-inactive {
+    color: var(--danger);
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+/* ── Fade-in animation ───────────────────────────────── */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+/* ── Toast / flash messages ──────────────────────────── */
+.flash-success {
+    background: var(--success-bg);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: var(--success);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+
+.flash-error {
+    background: var(--danger-bg);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--danger);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+
+/* ── Empty state ─────────────────────────────────────── */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-text {
+    font-size: 1rem;
+    margin-bottom: 0.35rem;
+}
+
+.empty-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+/* ── Profile section ─────────────────────────────────── */
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #6d28d9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 2rem;
+    color: white;
+    margin: 0 auto 1rem;
+    box-shadow: 0 0 25px rgba(124, 58, 237, 0.4);
+}
+
+.profile-photo-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 25px rgba(124, 58, 237, 0.4);
+    margin: 0 auto 0.5rem;
+    display: block;
+}
+
+/* ── Main content padding ────────────────────────────── */
+.block-container {
+    padding-top: 1rem !important;
+    max-width: 1200px !important;
+}
+
+/* ── Selectbox dropdown ──────────────────────────────── */
+div[data-baseweb="select"]>div {
+    background: var(--bg-input) !important;
+    border-color: var(--border-color) !important;
+    border-radius: 10px !important;
+}
+
+/* Selected value text */
+div[data-baseweb="select"] span,
+div[data-baseweb="select"] div,
+div[data-baseweb="select"] p,
+div[data-baseweb="select"] input,
+div[data-baseweb="select"] .css-1dimb5e-singleValue,
+div[data-baseweb="select"] [data-testid="stMarkdownContainer"],
+div[data-baseweb="select"] div[class*="ValueContainer"] span,
+div[data-baseweb="select"] div[class*="singleValue"] {
+    color: var(--text-primary) !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+}
+
+/* Dropdown popover */
+div[data-baseweb="popover"] {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius) !important;
+}
+
+div[data-baseweb="popover"] ul {
+    background: var(--bg-secondary) !important;
+}
+
+/* Dropdown options */
+li[role="option"] {
+    color: var(--text-primary) !important;
+    background: transparent !important;
+}
+
+li[role="option"]:hover,
+li[role="option"][aria-selected="true"] {
+    background: var(--accent-glow) !important;
+}
+
+/* Select placeholder text */
+div[data-baseweb="select"] div[class*="placeholder"] {
+    color: var(--text-muted) !important;
+}
+
+/* Select arrow icon */
+div[data-baseweb="select"] svg {
+    fill: var(--text-secondary) !important;
+}
+
+/* ── Number input ────────────────────────────────────── */
+.stNumberInput>div>div>input {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 10px !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-body) !important;
+}
+
+.stNumberInput button {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+
+.stNumberInput button:hover {
+    border-color: var(--accent) !important;
+    color: var(--text-primary) !important;
+}
+
+.stNumberInput label {
+    color: var(--text-secondary) !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+}
+
+/* ── Radio buttons (for input mode) ──────────────────── */
+.stRadio>div {
+    gap: 0.5rem !important;
+}
+
+.stRadio label {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 10px !important;
+    padding: 0.6rem 1rem !important;
+    transition: var(--transition) !important;
+    color: var(--text-primary) !important;
+}
+
+.stRadio label:hover {
+    border-color: var(--accent) !important;
+}
+
+/* ── Ensure all text inside selectbox menus is visible ── */
+div[data-baseweb="menu"] li {
+    color: var(--text-primary) !important;
+}
+
+div[data-baseweb="menu"] {
+    background: var(--bg-secondary) !important;
+}
+
+/* ── Comprehensive dropdown text visibility fix ──────── */
+/* Selected value in the closed dropdown */
+div[data-baseweb="select"] * {
+    color: var(--text-primary) !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+}
+
+div[data-baseweb="select"] svg {
+    fill: var(--text-secondary) !important;
+}
+
+div[data-baseweb="select"] div[class*="placeholder"] * {
+    color: var(--text-muted) !important;
+    -webkit-text-fill-color: var(--text-muted) !important;
+}
+
+/* Dropdown list items (open menu) */
+ul[role="listbox"] li,
+ul[role="listbox"] li * {
+    color: var(--text-primary) !important;
+}
+
+ul[role="listbox"] {
+    background: var(--bg-secondary) !important;
+}
+
+ul[role="listbox"] li:hover,
+ul[role="listbox"] li[aria-selected="true"] {
+    background: var(--accent-glow) !important;
+}
+
+/* Multiselect tags */
+span[data-baseweb="tag"] {
+    background: var(--accent-glow) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+span[data-baseweb="tag"] * {
+    color: var(--text-primary) !important;
+}
+
+/* ── Segmented Input-Mode Toggle (horizontal radio) ────── */
+div[data-testid="stRadio"]>div {
+    display: flex !important;
+    gap: 0 !important;
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 14px !important;
+    padding: 4px !important;
+    width: fit-content !important;
+}
+
+div[data-testid="stRadio"]>div>label {
+    flex: 0 0 auto !important;
+    padding: 10px 28px !important;
+    border-radius: 11px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    transition: all 0.25s ease !important;
+    color: var(--text-muted) !important;
+    background: transparent !important;
+    border: none !important;
+    white-space: nowrap !important;
+}
+
+div[data-testid="stRadio"]>div>label:hover {
+    color: var(--text-primary) !important;
+    background: rgba(124, 58, 237, 0.1) !important;
+}
+
+div[data-testid="stRadio"]>div>label[data-checked="true"],
+div[data-testid="stRadio"]>div>label:has(input:checked) {
+    background: linear-gradient(135deg, var(--accent), #6d28d9) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px var(--accent-glow) !important;
+}
+
+/* Hide the default radio circle */
+div[data-testid="stRadio"]>div>label>div:first-child {
+    display: none !important;
+}
+
+/* ── Live Recorder Component iframe ──────────────────── */
+iframe[title="components.live_recorder.live_recorder"] {
+    border: none !important;
+    border-radius: 16px !important;
+    min-height: 480px !important;
+}

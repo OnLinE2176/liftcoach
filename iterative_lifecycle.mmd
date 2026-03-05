@@ -1,0 +1,27 @@
+flowchart TD
+    IP([1. Initial Planning]) --> P
+
+    subgraph CYCLE["Iterative and Incremental Lifecycle"]
+        direction TB
+        P[2. Planning] --> RG[3. Requirements<br/>Gathering]
+        RG --> AD[4. Analysis<br/>and Design]
+        AD --> IMP[5. Implementation]
+        IMP --> T[6. Testing]
+        T --> E[7. Evaluation]
+    end
+
+    E -- "Repeat Phases 2 to 7" --> P
+    E -- "Requirements Met" --> Finish([8. Final System<br/>Deployment])
+
+    %% Styling - Dark theme matching other diagrams
+    %% Start/End nodes - Pink/Coral
+    style IP fill:#F8B4C8,stroke:#E091A8,stroke-width:2px,color:#1E1E3F
+    style Finish fill:#F8B4C8,stroke:#E091A8,stroke-width:2px,color:#1E1E3F
+
+    %% Lifecycle steps - Purple/Blue
+    style P fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style RG fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style AD fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style IMP fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style T fill:#6C5CE7,stroke:#5A4BD1,stroke-width:2px,color:#FFFFFF
+    style E fill:#E8A87C,stroke:#D4956A,stroke-width:2px,color:#1E1E3F

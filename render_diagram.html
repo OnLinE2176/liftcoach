@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #diagram-container {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div id="diagram-container">
+        <pre class="mermaid">
+flowchart TD
+    IP([1. Initial Planning]) --> P
+
+    subgraph "Iterative and Incremental Lifecycle"
+        direction TB
+        P[2. Planning] --> RG[3. Requirements Gathering]
+        RG --> AD[4. Analysis and Design]
+        AD --> IMP[5. Implementation]
+        IMP --> T[6. Testing]
+        T --> E[7. Evaluation]
+    end
+
+    E -- "8. Loop (Repeat Phases 2-7)" --> P
+    E -- "Requirements Met" --> Finish([Final System Deployment])
+
+    style IP fill:#d4edda,stroke:#28a745,stroke-width:2px
+    style Finish fill:#cce5ff,stroke:#004085,stroke-width:2px
+    style P fill:#ffffff,stroke:#6c757d,stroke-width:1px
+    style RG fill:#ffffff,stroke:#6c757d,stroke-width:1px
+    style AD fill:#ffffff,stroke:#6c757d,stroke-width:1px
+    style IMP fill:#ffffff,stroke:#6c757d,stroke-width:1px
+    style T fill:#ffffff,stroke:#6c757d,stroke-width:1px
+    style E fill:#ffffff,stroke:#6c757d,stroke-width:1px
+        </pre>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            fontSize: 16
+        });
+    </script>
+</body>
+</html>
