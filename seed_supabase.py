@@ -12,7 +12,7 @@ def generate_fake_data():
     if not db.DATABASE_URL:
         print("❌ DATABASE_URL is missing from your .env file!")
         print("Please configure it first as shown in the steps before running this script.")
-        return2
+        return
 
     print("Connecting to Supabase and initializing tables...")
     # This automatically invokes the dialect-agnostic creation logic (PostgreSQL!)
