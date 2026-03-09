@@ -15,7 +15,11 @@ import json
 import base64
 import pandas as pd
 import database as db
+import storage
 from components.live_recorder import live_recorder
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ── MediaPipe Tasks API ─────────────────────────────────
 BaseOptions = mp.tasks.BaseOptions
@@ -74,6 +78,9 @@ def navigate(page: str):
     st.session_state["page"] = page
 
 def logout():
+    user = st.session_state.get("user")
+    if user and user.get("id"):
+        db.log_action(user["id"], "logout", "auth", f"User @{user['username']} logged out")
     st.session_state["user"] = None
     st.session_state["page"] = "login"
     st.session_state["last_analysis"] = None
@@ -81,7 +88,13 @@ def logout():
 
 
 def is_admin() -> bool:
-    return st.session_state.get("user", {}).get("role") == "admin" if st.session_state.get("user") else False
+    user = st.session_state.get("user")
+    return user.get("role") in ("admin", "super_admin") if user else False
+
+
+def is_super_admin() -> bool:
+    user = st.session_state.get("user")
+    return user.get("role") == "super_admin" if user else False
 
 
 # ═══════════════════════════════════════════════════════════
@@ -96,7 +109,14 @@ def render_navbar():
     current = st.session_state["page"]
     initial = user["username"][0].upper()
 
-    if is_admin():
+    if is_super_admin():
+        nav_items = [
+            ("admin_dashboard", "📊 Dashboard"),
+            ("admin_users", "👥 Users"),
+            ("admin_content", "⚙️ Settings"),
+            ("super_admin", "🛡️ Super Admin"),
+        ]
+    elif is_admin():
         nav_items = [
             ("admin_dashboard", "📊 Dashboard"),
             ("admin_users", "👥 Users"),
@@ -509,6 +529,8 @@ def page_login():
                     else:
                         st.error(f"Incorrect password. You have **{remaining}** attempt{'s' if remaining != 1 else ''} remaining.")
                 elif isinstance(result, dict) and "id" in result:
+                    # Audit log: successful login
+                    db.log_action(result["id"], "login", "auth", f"User @{result['username']} logged in")
                     # Check if must reset password
                     if result.get("must_reset_password"):
                         st.session_state["user"] = result
@@ -516,7 +538,7 @@ def page_login():
                         st.rerun()
                     else:
                         st.session_state["user"] = result
-                        if result["role"] == "admin":
+                        if result["role"] in ("admin", "super_admin"):
                             navigate("admin_dashboard")
                         else:
                             navigate("home")
@@ -848,8 +870,12 @@ def _run_analysis(video_source, lift_type, user):
 
         st.markdown('</div>', unsafe_allow_html=True)
 
+        # Upload video to cloud storage (falls back to local if R2 not configured)
+        video_ref = storage.upload_video(output_path, output_filename)
+
         # Save session to database
         session_id = db.save_session(user["id"], lift_type, analysis_results, output_filename)
+        db.log_action(user["id"], "save_session", lift_type, f"Analyzed {lift_type}, verdict: {analysis_results.get('verdict', 'Unknown')}")
         st.session_state["last_analysis"] = analysis_results
         st.session_state["last_session_id"] = session_id
         st.session_state["last_output_filename"] = output_filename
@@ -1496,10 +1522,16 @@ def page_admin_users():
                     label = "Deactivate" if u["is_active"] else "Activate"
                     if st.button(label, key=f"toggle_{u['id']}", use_container_width=True):
                         db.toggle_user_active(u["id"])
+                        admin_user = st.session_state.get("user")
+                        if admin_user:
+                            db.log_action(admin_user["id"], "toggle_user", u["username"], f"{'Deactivated' if u['is_active'] else 'Activated'} user @{u['username']}")
                         st.rerun()
                 with bc2:
                     if st.button("Delete", key=f"delete_{u['id']}", use_container_width=True):
                         db.soft_delete_user(u["id"])
+                        admin_user = st.session_state.get("user")
+                        if admin_user:
+                            db.log_action(admin_user["id"], "delete_user", u["username"], f"Soft-deleted user @{u['username']}")
                         st.rerun()
         st.markdown("<hr style='margin: 0; opacity: 0.2;'>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -1536,8 +1568,202 @@ def page_admin_content():
         db.set_setting("tagline", tagline)
         db.set_setting("model_complexity", complexity[0])
         db.set_setting("detection_confidence", str(confidence))
+        admin_user = st.session_state.get("user")
+        if admin_user:
+            db.log_action(admin_user["id"], "update_settings", "app_settings", "Updated app name, tagline, model complexity, and detection confidence")
         st.success("Settings saved!")
     st.markdown('</div>', unsafe_allow_html=True)
+
+
+# ═══════════════════════════════════════════════════════════
+#  PAGE: SUPER ADMIN
+# ═══════════════════════════════════════════════════════════
+
+def page_super_admin():
+    render_navbar()
+    st.markdown("""
+    <div class="fade-in">
+        <div class="page-title">🛡️ Super Admin Panel</div>
+        <div class="page-subtitle">System-wide administration, audit trails, and database management</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    tab1, tab2, tab3, tab4 = st.tabs(["🔧 Admin Management", "⚙️ System Configuration", "📋 Audit Trails", "🗄️ Database Management"])
+
+    # ── Tab 1: Admin Management ──
+    with tab1:
+        st.markdown('<div class="glass-card-static">', unsafe_allow_html=True)
+        st.markdown("#### Administrator Accounts")
+        st.markdown('<div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">Manage administrator accounts and permissions. Promote users to admin or revoke admin access.</div>', unsafe_allow_html=True)
+
+        admins = db.get_all_admins()
+        for a in admins:
+            c1, c2, c3 = st.columns([3, 1.5, 2])
+            with c1:
+                role_icon = "🛡️" if a["role"] == "super_admin" else "👑"
+                st.markdown(f'<div style="padding:0.5rem 0;"><strong>{role_icon} @{a["username"]}</strong> <span style="color:var(--text-muted);font-size:0.82rem;margin-left:0.5rem;">{a["email"]}</span><br><span style="color:var(--text-muted);font-size:0.78rem;">{a.get("full_name", "")}</span></div>', unsafe_allow_html=True)
+            with c2:
+                role_label = "Super Admin" if a["role"] == "super_admin" else "Admin"
+                st.markdown(f'<div style="padding:0.75rem 0;"><span style="background:rgba(124,58,237,0.15);color:var(--accent-light);padding:0.3rem 0.7rem;border-radius:20px;font-size:0.8rem;font-weight:600;">{role_label}</span></div>', unsafe_allow_html=True)
+            with c3:
+                if a["role"] != "super_admin":
+                    if st.button("Demote to User", key=f"demote_{a['id']}", use_container_width=True):
+                        db.set_user_role(a["id"], "user")
+                        me = st.session_state.get("user")
+                        if me:
+                            db.log_action(me["id"], "demote_admin", a["username"], f"Demoted @{a['username']} from admin to user")
+                        st.rerun()
+            st.markdown("<hr style='margin:0;opacity:0.2;'>", unsafe_allow_html=True)
+
+        # Promote a user to admin
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("#### Promote User to Admin")
+        all_users = db.get_all_users()
+        regular_users = [u for u in all_users if u["role"] == "user" and u["is_active"]]
+        if regular_users:
+            user_options = {f"@{u['username']} ({u['email']})": u["id"] for u in regular_users}
+            selected = st.selectbox("Select a user to promote", list(user_options.keys()), key="promote_select")
+            if st.button("👑 Promote to Admin", key="promote_btn", use_container_width=True):
+                uid = user_options[selected]
+                db.set_user_role(uid, "admin")
+                me = st.session_state.get("user")
+                if me:
+                    db.log_action(me["id"], "promote_admin", selected.split(" ")[0][1:], f"Promoted user to admin")
+                st.success(f"Promoted {selected} to Admin.")
+                st.rerun()
+        else:
+            st.info("No regular users available to promote.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── Tab 2: System Configuration ──
+    with tab2:
+        st.markdown('<div class="glass-card-static">', unsafe_allow_html=True)
+        st.markdown("#### Global System Settings")
+
+        settings = db.get_all_settings()
+
+        st.markdown("##### Application")
+        sa_app_name = st.text_input("App Name", value=settings.get("app_name", "LiftCoach AI"), key="sa_app_name")
+        sa_tagline = st.text_input("Tagline", value=settings.get("tagline", ""), key="sa_tagline")
+
+        st.markdown("##### Analysis Engine")
+        sa_complexity = st.selectbox("Model Complexity", ["0 (Lite)", "1 (Full)", "2 (Heavy)"],
+                                     index=int(settings.get("model_complexity", "1")), key="sa_complexity")
+        sa_confidence = st.slider("Detection Confidence", 0.1, 1.0,
+                                   float(settings.get("detection_confidence", "0.5")), 0.05, key="sa_confidence")
+
+        st.markdown("##### Security")
+        sa_max_attempts = st.number_input("Max Login Attempts", min_value=1, max_value=20,
+                                           value=int(settings.get("max_login_attempts", "5")), step=1, key="sa_max_attempts")
+
+        st.markdown("##### Storage")
+        stor = storage.storage_status()
+        if stor["r2_enabled"]:
+            st.markdown(f'<div style="background:var(--success-bg);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius);padding:0.75rem 1rem;"><span style="color:var(--success);font-weight:600;">☁️ Cloudflare R2 Connected</span><br><span style="color:var(--text-muted);font-size:0.82rem;">Bucket: {stor["r2_bucket"]} · URL: {stor["r2_public_url"]}</span></div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="background:var(--warning-bg);border:1px solid rgba(245,158,11,0.3);border-radius:var(--radius);padding:0.75rem 1rem;"><span style="color:var(--warning);font-weight:600;">📁 Local Storage Mode</span><br><span style="color:var(--text-muted);font-size:0.82rem;">Configure R2 credentials in .env to enable cloud storage</span></div>', unsafe_allow_html=True)
+
+        if st.button("💾 Save Configuration", key="sa_save_config", use_container_width=True):
+            db.set_setting("app_name", sa_app_name)
+            db.set_setting("tagline", sa_tagline)
+            db.set_setting("model_complexity", sa_complexity[0])
+            db.set_setting("detection_confidence", str(sa_confidence))
+            db.set_setting("max_login_attempts", str(sa_max_attempts))
+            me = st.session_state.get("user")
+            if me:
+                db.log_action(me["id"], "update_settings", "system_config", "Updated system configuration via Super Admin panel")
+            st.success("Configuration saved!")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── Tab 3: Audit Trails ──
+    with tab3:
+        st.markdown('<div class="glass-card-static">', unsafe_allow_html=True)
+        st.markdown("#### Complete Audit Trail")
+        st.markdown('<div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">All system actions are logged here for security and compliance tracking.</div>', unsafe_allow_html=True)
+
+        log_limit = st.selectbox("Show recent", [50, 100, 250, 500], index=1, key="audit_limit")
+        logs = db.get_audit_logs(limit=log_limit)
+
+        if logs:
+            # Action filter
+            all_actions = sorted(set(l["action"] for l in logs))
+            selected_actions = st.multiselect("Filter by action", all_actions, default=all_actions, key="audit_filter")
+            filtered = [l for l in logs if l["action"] in selected_actions]
+
+            action_colors = {
+                "login": "var(--success)", "logout": "var(--text-muted)",
+                "toggle_user": "var(--warning)", "delete_user": "var(--danger)",
+                "promote_admin": "var(--accent-light)", "demote_admin": "var(--warning)",
+                "update_settings": "var(--accent-light)", "save_session": "var(--success)",
+            }
+
+            for log in filtered:
+                color = action_colors.get(log["action"], "var(--text-secondary)")
+                ts = str(log["created_at"])[:19]
+                st.markdown(f"""
+                <div style="display:flex;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border-color);">
+                    <div style="min-width:140px;color:var(--text-muted);font-size:0.78rem;">{ts}</div>
+                    <div style="min-width:100px;"><span style="background:rgba(124,58,237,0.1);color:{color};padding:0.2rem 0.6rem;border-radius:12px;font-size:0.78rem;font-weight:600;">{log['action']}</span></div>
+                    <div style="min-width:100px;color:var(--text-primary);font-weight:500;font-size:0.85rem;">@{log['username']}</div>
+                    <div style="flex:1;color:var(--text-muted);font-size:0.82rem;">{log.get('details', '')}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            st.markdown(f'<div style="margin-top:0.75rem;text-align:center;color:var(--text-muted);font-size:0.8rem;">Showing {len(filtered)} of {len(logs)} entries</div>', unsafe_allow_html=True)
+        else:
+            st.info("No audit logs recorded yet. Actions will appear here as users interact with the system.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # ── Tab 4: Database Management ──
+    with tab4:
+        st.markdown('<div class="glass-card-static">', unsafe_allow_html=True)
+        st.markdown("#### Database Overview")
+        st.markdown('<div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">Monitor database table sizes and data integrity.</div>', unsafe_allow_html=True)
+
+        stats = db.get_db_table_stats()
+        total_rows = sum(s["rows"] for s in stats)
+
+        # Summary row
+        mc1, mc2, mc3 = st.columns(3)
+        with mc1:
+            st.markdown(f'<div class="glass-card stat-card"><div class="stat-value">{len(stats)}</div><div class="stat-label">Tables</div></div>', unsafe_allow_html=True)
+        with mc2:
+            st.markdown(f'<div class="glass-card stat-card"><div class="stat-value">{total_rows}</div><div class="stat-label">Total Rows</div></div>', unsafe_allow_html=True)
+        with mc3:
+            db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "liftcoach.db")
+            db_size = os.path.getsize(db_path) / 1024 if os.path.exists(db_path) else 0
+            size_str = f"{db_size:.1f} KB" if db_size < 1024 else f"{db_size/1024:.1f} MB"
+            st.markdown(f'<div class="glass-card stat-card"><div class="stat-value">{size_str}</div><div class="stat-label">Database Size</div></div>', unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("#### Table Details")
+
+        hs = "padding:0.65rem 0.75rem;color:var(--accent-light);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid var(--border-color);"
+        rows_html = ""
+        for s in stats:
+            pct = round(s["rows"] / total_rows * 100, 1) if total_rows > 0 else 0
+            rows_html += f'<tr><td style="padding:0.7rem 0.75rem;border-bottom:1px solid var(--border-color);color:var(--text-primary);font-weight:500;font-size:0.9rem;">📋 {s["table"]}</td><td style="padding:0.7rem 0.75rem;border-bottom:1px solid var(--border-color);text-align:center;color:var(--accent-light);font-weight:700;font-size:0.9rem;">{s["rows"]}</td><td style="padding:0.7rem 0.75rem;border-bottom:1px solid var(--border-color);text-align:center;color:var(--text-muted);font-size:0.85rem;">{pct}%</td></tr>'
+
+        table_html = f'<table style="width:100%;border-collapse:collapse;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border-color);"><thead><tr style="background:rgba(124,58,237,0.12);"><th style="text-align:left;{hs}">Table Name</th><th style="text-align:center;{hs}">Row Count</th><th style="text-align:center;{hs}">% of Total</th></tr></thead><tbody>{rows_html}</tbody></table>'
+        st.markdown(table_html, unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("#### Data Integrity Check")
+        if st.button("🔍 Run Integrity Check", key="integrity_check", use_container_width=True):
+            try:
+                conn = db.get_connection()
+                result = conn.execute("PRAGMA integrity_check").fetchone()
+                fk_result = conn.execute("PRAGMA foreign_key_check").fetchall()
+                conn.close()
+
+                if result[0] == "ok" and not fk_result:
+                    st.markdown('<div style="background:var(--success-bg);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius);padding:1rem;"><span style="color:var(--success);font-weight:700;">✅ Database integrity check passed</span><br><span style="color:var(--text-muted);font-size:0.85rem;">All tables and foreign key constraints are valid.</span></div>', unsafe_allow_html=True)
+                else:
+                    issues = result[0] if result[0] != "ok" else f"{len(fk_result)} foreign key violation(s)"
+                    st.markdown(f'<div style="background:var(--danger-bg);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:1rem;"><span style="color:var(--danger);font-weight:700;">⚠️ Issues detected</span><br><span style="color:var(--text-muted);font-size:0.85rem;">{issues}</span></div>', unsafe_allow_html=True)
+            except Exception as e:
+                st.error(f"Integrity check failed: {e}")
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -1559,7 +1785,12 @@ def main():
         page = "force_reset_password"
 
     # Role guard: prevent regular users from admin pages
-    if user and user.get("role") != "admin" and page.startswith("admin"):
+    if user and user.get("role") not in ("admin", "super_admin") and page.startswith("admin"):
+        navigate("home")
+        page = "home"
+
+    # Role guard: prevent non-super-admins from super admin page
+    if user and user.get("role") != "super_admin" and page == "super_admin":
         navigate("home")
         page = "home"
 
@@ -1575,6 +1806,7 @@ def main():
         "admin_dashboard": page_admin_dashboard,
         "admin_users": page_admin_users,
         "admin_content": page_admin_content,
+        "super_admin": page_super_admin,
     }
 
     handler = routes.get(page, page_login)

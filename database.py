@@ -8,16 +8,73 @@ import bcrypt
 import os
 import json
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Optional: psycopg2 for PostgreSQL (Supabase)
+try:
+    import psycopg2
+    import psycopg2.extras
+    HAS_PSYCOPG2 = True
+except ImportError:
+    HAS_PSYCOPG2 = False
+
+load_dotenv()
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "liftcoach.db")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+class DBConnection:
+    """Wrapper that duck-types an SQLite connection but can route to PostgreSQL."""
+    def __init__(self, conn, is_postgres=False):
+        self._conn = conn
+        self.is_postgres = is_postgres
+
+    def execute(self, query, params=()):
+        if self.is_postgres and "?" in query and "%s" not in query:
+            query = query.replace("?", "%s")
+        cur = self._conn.cursor()
+        cur.execute(query, params)
+        return cur
+
+    def executescript(self, script):
+        if self.is_postgres:
+            script = script.replace("AUTOINCREMENT", "SERIAL")
+            script = script.replace("INTEGER PRIMARY KEY SERIAL", "SERIAL PRIMARY KEY")
+        
+        cur = self._conn.cursor()
+        if self.is_postgres:
+            cur.execute(script)
+        else:
+            cur.executescript(script)
+        return cur
+
+    def commit(self):
+        self._conn.commit()
+
+    def close(self):
+        self._conn.close()
+
+    def cursor(self):
+        # Return self so cursor.execute routes directly to our wrapper's execute
+        return self
 
 
 def get_connection():
-    """Get a database connection with row factory."""
+    """Get a database connection wrapper."""
+    if DATABASE_URL and HAS_PSYCOPG2:
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            # Use DictCursor to emulate sqlite3.Row dict-like access
+            conn.cursor_factory = psycopg2.extras.DictCursor
+            return DBConnection(conn, is_postgres=True)
+        except Exception as e:
+            print(f"Failed to connect to PostgreSQL: {e}. Falling back to SQLite.")
+            pass # Fall back to SQLite naturally
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    return DBConnection(conn, is_postgres=False)
 
 
 def init_db():
@@ -40,7 +97,7 @@ def init_db():
             preferred_lift TEXT DEFAULT '',
             bio TEXT DEFAULT '',
             profile_photo TEXT DEFAULT '',
-            role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('admin', 'user')),
+            role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('super_admin', 'admin', 'user')),
             is_active INTEGER NOT NULL DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -73,6 +130,16 @@ def init_db():
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action TEXT NOT NULL,
+            target TEXT DEFAULT '',
+            details TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
     """)
 
     # Migrate existing DB: add new columns if they don't exist yet
@@ -87,6 +154,15 @@ def init_db():
             ("admin", "admin@liftcoach.ai", pw_hash, "System Administrator", "admin"),
         )
 
+    # Seed default super admin if not exists
+    existing_sa = cursor.execute("SELECT id FROM users WHERE username = 'superadmin'").fetchone()
+    if not existing_sa:
+        sa_hash = bcrypt.hashpw("superadmin123".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        cursor.execute(
+            "INSERT INTO users (username, email, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)",
+            ("superadmin", "superadmin@liftcoach.ai", sa_hash, "Super Administrator", "super_admin"),
+        )
+
     # Seed default settings
     defaults = {
         "app_name": "LiftCoach AI",
@@ -96,17 +172,27 @@ def init_db():
         "max_login_attempts": "5",
     }
     for key, value in defaults.items():
-        cursor.execute(
-            "INSERT OR IGNORE INTO app_settings (key, value) VALUES (?, ?)", (key, value)
-        )
+        if conn.is_postgres:
+            cursor.execute(
+                "INSERT INTO app_settings (key, value) VALUES (%s, %s) ON CONFLICT(key) DO NOTHING", (key, value)
+            )
+        else:
+            cursor.execute(
+                "INSERT OR IGNORE INTO app_settings (key, value) VALUES (?, ?)", (key, value)
+            )
 
     conn.commit()
     conn.close()
 
 
-def _migrate_user_columns(cursor):
+def _migrate_user_columns(conn_wrapper):
     """Add new profile columns to existing users table if missing."""
-    existing_cols = {row[1] for row in cursor.execute("PRAGMA table_info(users)").fetchall()}
+    if conn_wrapper.is_postgres:
+        cur = conn_wrapper.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'users'")
+        existing_cols = {row[0] for row in cur.fetchall()}
+    else:
+        cur = conn_wrapper.execute("PRAGMA table_info(users)")
+        existing_cols = {row[1] for row in cur.fetchall()}
     new_columns = {
         "age": "INTEGER",
         "weight_kg": "REAL",
@@ -123,7 +209,7 @@ def _migrate_user_columns(cursor):
     }
     for col_name, col_type in new_columns.items():
         if col_name not in existing_cols:
-            cursor.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
+            conn_wrapper.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}")
 
 
 # ─── AUTH ──────────────────────────────────────────────
@@ -144,11 +230,13 @@ def register_user(username: str, email: str, password: str, full_name: str = "")
         )
         conn.commit()
         return {"success": True, "message": "Registration successful!"}
-    except sqlite3.IntegrityError as e:
-        if "username" in str(e):
-            return {"success": False, "message": "Username already taken."}
-        elif "email" in str(e):
-            return {"success": False, "message": "Email already registered."}
+    except Exception as e:
+        err_str = str(e).lower()
+        if "integrityerror" in str(type(e)).lower() or "unique constraint" in err_str or "duplicate key" in err_str:
+            if "username" in err_str:
+                return {"success": False, "message": "Username already taken."}
+            elif "email" in err_str:
+                return {"success": False, "message": "Email already registered."}
         return {"success": False, "message": "Registration failed."}
     finally:
         conn.close()
@@ -233,8 +321,10 @@ def update_profile(user_id: int, **kwargs) -> dict:
         conn.execute(f"UPDATE users SET {set_clause} WHERE id = ?", values)
         conn.commit()
         return {"success": True, "message": "Profile updated successfully!"}
-    except sqlite3.IntegrityError:
-        return {"success": False, "message": "Email already in use by another account."}
+    except Exception as e:
+        if "integrityerror" in str(type(e)).lower() or "unique constraint" in str(e).lower() or "duplicate key" in str(e).lower():
+            return {"success": False, "message": "Email already in use by another account."}
+        raise e
     finally:
         conn.close()
 
@@ -299,20 +389,36 @@ def force_reset_password(user_id: int, new_password: str) -> dict:
 def save_session(user_id: int, lift_type: str, analysis_results: dict, video_filename: str) -> int:
     """Save an analysis session. Returns session ID."""
     conn = get_connection()
-    cursor = conn.execute(
-        """INSERT INTO sessions (user_id, lift_type, verdict, faults_json, kinematic_json, phases_json, video_filename)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (
-            user_id,
-            lift_type,
-            analysis_results.get("verdict", "Unknown"),
-            json.dumps(analysis_results.get("faults_found", [])),
-            json.dumps(analysis_results.get("kinematic_data", {})),
-            json.dumps(analysis_results.get("phases", {})),
-            video_filename,
-        ),
-    )
-    session_id = cursor.lastrowid
+    if conn.is_postgres:
+        cursor = conn.execute(
+            """INSERT INTO sessions (user_id, lift_type, verdict, faults_json, kinematic_json, phases_json, video_filename)
+               VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id""",
+            (
+                user_id,
+                lift_type,
+                analysis_results.get("verdict", "Unknown"),
+                json.dumps(analysis_results.get("faults_found", [])),
+                json.dumps(analysis_results.get("kinematic_data", {})),
+                json.dumps(analysis_results.get("phases", {})),
+                video_filename,
+            ),
+        )
+        session_id = cursor.fetchone()[0]
+    else:
+        cursor = conn.execute(
+            """INSERT INTO sessions (user_id, lift_type, verdict, faults_json, kinematic_json, phases_json, video_filename)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (
+                user_id,
+                lift_type,
+                analysis_results.get("verdict", "Unknown"),
+                json.dumps(analysis_results.get("faults_found", [])),
+                json.dumps(analysis_results.get("kinematic_data", {})),
+                json.dumps(analysis_results.get("phases", {})),
+                video_filename,
+            ),
+        )
+        session_id = cursor.lastrowid
     conn.commit()
     conn.close()
     return session_id
@@ -342,11 +448,18 @@ def get_session(session_id: int) -> dict | None:
 def save_to_gallery(session_id: int, user_id: int, title: str, notes: str = "") -> int:
     """Save a session to the user's gallery. Returns gallery ID."""
     conn = get_connection()
-    cursor = conn.execute(
-        "INSERT INTO gallery (session_id, user_id, title, notes) VALUES (?, ?, ?, ?)",
-        (session_id, user_id, title, notes),
-    )
-    gid = cursor.lastrowid
+    if conn.is_postgres:
+        cursor = conn.execute(
+            "INSERT INTO gallery (session_id, user_id, title, notes) VALUES (?, ?, ?, ?) RETURNING id",
+            (session_id, user_id, title, notes),
+        )
+        gid = cursor.fetchone()[0]
+    else:
+        cursor = conn.execute(
+            "INSERT INTO gallery (session_id, user_id, title, notes) VALUES (?, ?, ?, ?)",
+            (session_id, user_id, title, notes),
+        )
+        gid = cursor.lastrowid
     conn.commit()
     conn.close()
     return gid
@@ -461,7 +574,10 @@ def get_setting(key: str, default: str = "") -> str:
 def set_setting(key: str, value: str):
     """Set an app setting."""
     conn = get_connection()
-    conn.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)", (key, value))
+    if conn.is_postgres:
+        conn.execute("INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = EXCLUDED.value", (key, value))
+    else:
+        conn.execute("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)", (key, value))
     conn.commit()
     conn.close()
 
@@ -472,3 +588,72 @@ def get_all_settings() -> dict:
     rows = conn.execute("SELECT key, value FROM app_settings").fetchall()
     conn.close()
     return {r["key"]: r["value"] for r in rows}
+
+
+# ─── AUDIT LOGS ────────────────────────────────────────────
+
+def log_action(user_id: int, action: str, target: str = "", details: str = ""):
+    """Insert an audit log entry."""
+    conn = get_connection()
+    conn.execute(
+        "INSERT INTO audit_logs (user_id, action, target, details) VALUES (?, ?, ?, ?)",
+        (user_id, action, target, details),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_audit_logs(limit: int = 100) -> list:
+    """Get recent audit logs joined with usernames."""
+    conn = get_connection()
+    rows = conn.execute(
+        """SELECT a.*, COALESCE(u.username, 'system') as username
+           FROM audit_logs a LEFT JOIN users u ON a.user_id = u.id
+           ORDER BY a.created_at DESC LIMIT ?""",
+        (limit,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+# ─── SUPER ADMIN ───────────────────────────────────────────
+
+def get_all_admins() -> list:
+    """Get all users with admin or super_admin role."""
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT id, username, email, full_name, role, is_active, created_at FROM users WHERE role IN ('admin', 'super_admin') ORDER BY role, created_at"
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def set_user_role(user_id: int, new_role: str) -> dict:
+    """Change a user's role. new_role must be 'user', 'admin', or 'super_admin'."""
+    if new_role not in ('user', 'admin', 'super_admin'):
+        return {"success": False, "message": "Invalid role."}
+    conn = get_connection()
+    conn.execute("UPDATE users SET role = ? WHERE id = ?", (new_role, user_id))
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": f"Role updated to {new_role}."}
+
+
+def get_db_table_stats() -> list:
+    """Return row counts for every table in the database."""
+    conn = get_connection()
+    if conn.is_postgres:
+        tables = conn.execute(
+            "SELECT tablename as name FROM pg_catalog.pg_tables WHERE schemaname = 'public'"
+        ).fetchall()
+    else:
+        tables = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+        ).fetchall()
+    stats = []
+    for t in tables:
+        name = t["name"]
+        count = conn.execute(f"SELECT COUNT(*) FROM [{name}]").fetchone()[0]
+        stats.append({"table": name, "rows": count})
+    conn.close()
+    return stats
