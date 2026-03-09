@@ -14,7 +14,6 @@ liftcoach.db
 
 # ML model files (download separately — see README)
 *.pt
-*.task
 
 # User-uploaded content
 profile_photos/
