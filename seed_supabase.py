@@ -14,13 +14,13 @@ def generate_fake_data():
         print("Please configure it first as shown in the steps before running this script.")
         return
 
-    print("🚀 Connecting to Supabase and initializing tables...")
+    print("Connecting to Supabase and initializing tables...")
     # This automatically invokes the dialect-agnostic creation logic (PostgreSQL!)
     db.init_db()
     
     conn = db.get_connection()
 
-    print("👥 Seeding 10 dummy users...")
+    print("Seeding 10 dummy users...")
     users = [
         ("john_doe", "john@email.com", "John Doe"),
         ("sarah_smith", "sarah@email.com", "Sarah Smith"),
@@ -49,7 +49,7 @@ def generate_fake_data():
             if db_user:
                 user_ids.append(db_user[0])
                 
-    print("🏋️‍♂️ Generating 20 realistic analysis sessions for the screenshot...")
+    print("Generating 20 realistic analysis sessions for the screenshot...")
     lifts = ["Squat", "Bench Press", "Deadlift"]
     verdicts = ["Good Lift", "Bad Lift"]
     
@@ -81,8 +81,8 @@ def generate_fake_data():
         if random.random() > 0.5:
             db.save_to_gallery(session_id, uid, f"My {lift} PR attempt", f"Felt heavy today. Result: {verdict}")
 
-    print("✅ Dummy data successfully loaded into Supabase!")
-    print("👉 Go to your Supabase Table Editor now and take your screenshot!")
+    print("Dummy data successfully loaded into Supabase!")
+    print("Go to your Supabase Table Editor now and take your screenshot!")
 
 if __name__ == "__main__":
     generate_fake_data()
