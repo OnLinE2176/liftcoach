@@ -1,9 +1,9 @@
 import os
 import random
 import time
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 
-import database as db
+import database as db  # type: ignore
 
 # Load .env explicitly to ensure DATABASE_URL is read
 load_dotenv()
@@ -69,7 +69,7 @@ def generate_fake_data():
         analysis_result = {
             "verdict": verdict,
             "faults_found": faults_found,
-            "kinematic_data": {"bar_speed": round(random.uniform(0.3, 0.9), 2), "depth": round(random.uniform(80, 110), 2)},
+            "kinematic_data": {"bar_speed": float(f"{random.uniform(0.3, 0.9):.2f}"), "depth": float(f"{random.uniform(80, 110):.2f}")},
             "phases": {"setup": "good", "eccentric": "fast", "concentric": "slow", "lockout": "good"}
         }
         
