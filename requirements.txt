@@ -1,7 +1,7 @@
-streamlit==1.50.0
-opencv-python-headless==4.12.0.88
-mediapipe==0.10.32
-numpy==2.0.1
-pandas==2.3.3
+streamlit
+opencv-python-headless
+mediapipe
+numpy
+pandas
 bcrypt
 Pillow
