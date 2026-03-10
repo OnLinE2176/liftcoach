@@ -1,6 +1,6 @@
 # 🏋️ LiftCoach AI
 
-LiftCoach AI is a web application designed to analyze powerlifting form using computer vision. Built with Streamlit and MediaPipe's BlazePose model, it provides fast, lightweight, and highly accurate pose estimation to help athletes improve their technique.
+LiftCoach AI is a web application designed to analyze Olympic weightlifting form utilizing IWF standards using computer vision. Built with Streamlit and MediaPipe's BlazePose model, it provides fast, lightweight, and highly accurate pose estimation to help athletes improve their technique.
 
 ---
 
@@ -9,7 +9,7 @@ LiftCoach AI is a web application designed to analyze powerlifting form using co
 ### Analysis Capabilities
 - 🎬 Upload MP4, MOV, or AVI videos
 - 🧑 Detect and track athlete pose using MediaPipe BlazePose (33 full-body landmarks)
-- 📊 Analyze lift technique (Squat, Bench Press, Deadlift)
+- 📊 Analyze lift technique (Snatch, Clean & Jerk)
 - 🔍 Identify faults (e.g., Incomplete Hip Extension, Early Arm Bend)
 - 📈 Generate analyzed video with pose overlay and automated feedback
 - 📥 Download results and raw kinematic data (JSON)
