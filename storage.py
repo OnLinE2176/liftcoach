@@ -78,7 +78,14 @@ def get_video_url(filename_or_url: str) -> str | None:
         return None
     if filename_or_url.startswith("http"):
         return filename_or_url
-    # Local file
+
+    # Check if R2 is enabled - dynamically reconstruct the URL if it's just a filename
+    if _r2_enabled() and R2_PUBLIC_URL:
+        # Check if the filename already has the 'videos/' prefix
+        prefix = "" if filename_or_url.startswith("videos/") else "videos/"
+        return f"{R2_PUBLIC_URL}/{prefix}{filename_or_url}"
+
+    # Local file fallback
     local_path = os.path.join(OUTPUT_DIR, filename_or_url)
     if os.path.exists(local_path):
         return local_path
