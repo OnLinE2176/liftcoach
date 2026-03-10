@@ -18,7 +18,7 @@ import database as db
 import storage
 from components.live_recorder import live_recorder
 from dotenv import load_dotenv
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration, WebRtcMode
 import av
 
 load_dotenv()
@@ -372,7 +372,7 @@ class LiftAnalysisMediaPipe:
 
         return _sanitize({"faults_found": faults_found, "verdict": verdict, "phases": phases, "kinematic_data": kinematic_data})
 
-class PoseVideoTransformer(VideoTransformerBase):
+class PoseVideoProcessor(VideoProcessorBase):
     def __init__(self):
         self.options = PoseLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=MODEL_PATH),
@@ -389,7 +389,7 @@ class PoseVideoTransformer(VideoTransformerBase):
         if not os.path.exists(MODEL_PATH):
             raise RuntimeError(f"MediaPipe model missing at {MODEL_PATH}")
 
-    def transform(self, frame):
+    def recv(self, frame):
         img = frame.to_ndarray(format="bgr24")
         
         # Determine framerate
@@ -415,7 +415,7 @@ class PoseVideoTransformer(VideoTransformerBase):
             # Drop errors so thread doesn't crash
             pass
             
-        return img
+        return av.VideoFrame.from_ndarray(img, format="bgr24")
 
 
 
@@ -815,9 +815,9 @@ def page_analyze():
         
         webrtc_streamer(
             key="realtime-pose",
-            mode=1, # SENDRECV
+            mode=WebRtcMode.SENDRECV,
             rtc_configuration=RTC_CONFIGURATION,
-            video_transformer_factory=PoseVideoTransformer,
+            video_processor_factory=PoseVideoProcessor,
             media_stream_constraints={"video": True, "audio": False},
         )
         
