@@ -798,8 +798,19 @@ def page_analyze():
         st.markdown("##### True Real-Time Analysis")
         st.markdown("Click **START** to turn on your webcam. The AI will draw the joints over your body instantly.")
         
+        # --- Use free public STUN servers for WebRTC ---
+        @st.cache_data
+        def get_ice_servers():
+            return [
+                {"urls": ["stun:stun.l.google.com:19302"]},
+                {"urls": ["stun:stun1.l.google.com:19302"]},
+                {"urls": ["stun:stun2.l.google.com:19302"]},
+                {"urls": ["stun:stun3.l.google.com:19302"]},
+                {"urls": ["stun:stun4.l.google.com:19302"]},
+            ]
+            
         RTC_CONFIGURATION = RTCConfiguration(
-            {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+            {"iceServers": get_ice_servers()}
         )
         
         webrtc_streamer(

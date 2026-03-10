@@ -8,3 +8,5 @@ Pillow
 boto3
 python-dotenv
 psycopg2-binary
+streamlit-webrtc
+av
