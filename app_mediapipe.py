@@ -908,6 +908,22 @@ def _display_results(user):
     verdict = analysis_results["verdict"]
     faults = analysis_results.get("faults_found", [])
     kd = analysis_results.get("kinematic_data", {})
+    
+    # Attempt to resolve the Cloudflare R2 URL from the db if we just saved it
+    sid = st.session_state.get("last_session_id")
+    video_url = None
+    if sid:
+        import database as db
+        import storage
+        session_data = db.get_user_sessions(user["id"])
+        for s in session_data:
+            if s["id"] == sid:
+                video_url = storage.get_video_url(s["video_path"])
+                break
+    
+    # Fallback to local
+    if not video_url:
+        video_url = output_path
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -917,8 +933,11 @@ def _display_results(user):
     with v_col:
         st.markdown('<div class="glass-card-static">', unsafe_allow_html=True)
         st.markdown("#### 📹 Analyzed Video")
-        if os.path.exists(output_path):
-            with open(output_path, 'rb') as f:
+        if video_url and video_url.startswith("http"):
+            st.video(video_url)
+            st.markdown(f'<a href="{video_url}" download="analyzed_lift.mp4" target="_blank" style="text-decoration:none;"><button style="width:100%;padding:0.5rem;border-radius:var(--radius);background:var(--card-bg);border:1px solid var(--border-color);color:var(--text-primary);cursor:pointer;margin-top:0.5rem;">⬇️ Download Video</button></a>', unsafe_allow_html=True)
+        elif video_url and os.path.exists(video_url):
+            with open(video_url, 'rb') as f:
                 video_bytes = f.read()
             st.video(video_bytes)
             st.download_button("⬇️ Download Video", data=video_bytes, file_name=output_filename, mime="video/mp4")
