@@ -855,7 +855,7 @@ def _run_analysis(video_source, lift_type, user):
         output_filename = f"analyzed_mediapipe_{int(time.time())}.mp4"
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         frame_h, frame_w, _ = annotated_frames[0].shape
-        fourcc = cv2.VideoWriter_fourcc(*'avc1')
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         writer = cv2.VideoWriter(output_path, fourcc, frame_rate, (frame_w, frame_h))
 
         for i, frame in enumerate(annotated_frames):
