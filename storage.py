@@ -8,6 +8,7 @@ Abstraction layer for file storage with automatic fallback.
 import os
 import time
 import logging
+import subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +48,35 @@ def _get_s3_client():
 #  VIDEO STORAGE
 # ═══════════════════════════════════════════════════════════
 
+def _transcode_video(local_path: str) -> str:
+    """
+    Transcode the video to H.264 using FFmpeg to ensure it plays in browsers.
+    Replaces the file in-place and returns the path. Uses ultrafast preset for speed.
+    """
+    temp_path = f"{local_path}_temp.mp4"
+    try:
+        subprocess.run([
+            "ffmpeg", "-y", "-i", local_path,
+            "-vcodec", "libx264", "-crf", "26", "-preset", "ultrafast",
+            "-pix_fmt", "yuv420p", temp_path
+        ], check=True, capture_output=True)
+        # Replace original with transcoded
+        os.replace(temp_path, local_path)
+    except Exception as e:
+        logger.warning(f"FFmpeg transcode skipped or failed: {e}")
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+    return local_path
+
+
 def upload_video(local_path: str, filename: str) -> str:
     """Upload an analyzed video. Returns a URL (R2) or local path."""
+    # Ensure it's in a web-friendly H.264 format before shipping it to the cloud
+    _transcode_video(local_path)
+    
     if _r2_enabled():
         try:
             s3 = _get_s3_client()
