@@ -385,6 +385,10 @@ class PoseVideoProcessor(VideoProcessorBase):
         self.landmarker = PoseLandmarker.create_from_options(self.options)
         self.frame_idx = 0
         
+        # Recording state
+        self.is_recording = False
+        self.recorded_frames = []
+        
         # Ensure model exists before running live stream
         if not os.path.exists(MODEL_PATH):
             raise RuntimeError(f"MediaPipe model missing at {MODEL_PATH}")
@@ -400,6 +404,10 @@ class PoseVideoProcessor(VideoProcessorBase):
         
         timestamp_ms = int((self.frame_idx / frame_rate) * 1000)
         self.frame_idx += 1
+        
+        # Buffer raw frame if recording
+        if self.is_recording:
+            self.recorded_frames.append(img.copy())
         
         try:
             results = self.landmarker.detect_for_video(mp_image, timestamp_ms)
@@ -813,7 +821,7 @@ def page_analyze():
             {"iceServers": get_ice_servers()}
         )
         
-        webrtc_streamer(
+        ctx = webrtc_streamer(
             key="realtime-pose",
             mode=WebRtcMode.SENDRECV,
             rtc_configuration=RTC_CONFIGURATION,
@@ -821,7 +829,46 @@ def page_analyze():
             media_stream_constraints={"video": True, "audio": False},
         )
         
-        st.info("💡 Note: To save a session to your gallery, please use the **Upload Video** function instead. This Live Practice mode is strictly for real-time feedback.")
+        if ctx.video_processor:
+            st.markdown("---")
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                # Toggle recording state
+                record = st.checkbox("🔴 Record Session", value=False)
+                ctx.video_processor.is_recording = record
+                
+                if record:
+                    st.warning(f"Recording in progress... (Buffered {len(ctx.video_processor.recorded_frames)} frames)")
+            
+            with col2:
+                # Process recording
+                if st.button("✅ Finish & Analyze Recording", use_container_width=True):
+                    frames = ctx.video_processor.recorded_frames
+                    if len(frames) == 0:
+                        st.error("No frames recorded. Please check 'Record Session' while moving.")
+                    else:
+                        st.success(f"Captured {len(frames)} frames. Processing analysis...")
+                        # Write frames to a temporary MP4
+                        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+                        tmp_name = tmp.name
+                        tmp.close()
+                        
+                        try:
+                            h, w, _ = frames[0].shape
+                            writer = cv2.VideoWriter(tmp_name, cv2.VideoWriter_fourcc(*'mp4v'), 30.0, (w, h))
+                            for f in frames:
+                                writer.write(f)
+                            writer.release()
+                            
+                            # Pass to the existing analysis flow
+                            _run_analysis(tmp_name, lift_type, user)
+                            
+                        finally:
+                            # Clear buffer
+                            ctx.video_processor.recorded_frames = []
+                            ctx.video_processor.is_recording = False
+        
+        st.info("💡 Note: Toggle 'Record Session' to buffer your lift. When done, click 'Finish & Analyze' to save it to your gallery.")
 
     # Show results from session state (persists across reruns)
     if st.session_state.get("last_analysis"):
