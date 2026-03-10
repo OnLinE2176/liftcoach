@@ -18,6 +18,8 @@ import database as db
 import storage
 from components.live_recorder import live_recorder
 from dotenv import load_dotenv
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
+import av
 
 load_dotenv()
 
@@ -369,6 +371,52 @@ class LiftAnalysisMediaPipe:
             return obj
 
         return _sanitize({"faults_found": faults_found, "verdict": verdict, "phases": phases, "kinematic_data": kinematic_data})
+
+class PoseVideoTransformer(VideoTransformerBase):
+    def __init__(self):
+        self.options = PoseLandmarkerOptions(
+            base_options=BaseOptions(model_asset_path=MODEL_PATH),
+            running_mode=RunningMode.VIDEO,
+            num_poses=1,
+            min_pose_detection_confidence=0.5,
+            min_pose_presence_confidence=0.5,
+            min_tracking_confidence=0.5,
+        )
+        self.landmarker = PoseLandmarker.create_from_options(self.options)
+        self.frame_idx = 0
+        
+        # Ensure model exists before running live stream
+        if not os.path.exists(MODEL_PATH):
+            raise RuntimeError(f"MediaPipe model missing at {MODEL_PATH}")
+
+    def transform(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        
+        # Determine framerate
+        frame_rate = 30.0 # general estimate for webcam
+        
+        frame_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
+        
+        timestamp_ms = int((self.frame_idx / frame_rate) * 1000)
+        self.frame_idx += 1
+        
+        try:
+            results = self.landmarker.detect_for_video(mp_image, timestamp_ms)
+            
+            if results.pose_landmarks and len(results.pose_landmarks) > 0:
+                mp_draw_landmarks(
+                    img, results.pose_landmarks[0],
+                    PoseLandmarksConnections.POSE_LANDMARKS,
+                    DrawingSpec(color=(124, 58, 237), thickness=2, circle_radius=3),
+                    DrawingSpec(color=(167, 139, 250), thickness=2, circle_radius=1),
+                )
+        except Exception as e:
+            # Drop errors so thread doesn't crash
+            pass
+            
+        return img
+
 
 
 # ═══════════════════════════════════════════════════════════
@@ -747,23 +795,22 @@ def page_analyze():
                 _run_analysis(uploaded_file, lift_type, user)
     else:
         # ── Live record mode ─────────────────────────────
-        video_data = live_recorder(key="live_rec")
-        if video_data and not st.session_state.get("_live_rec_processed"):
-            # Mark as consumed so reruns don't re-trigger analysis
-            st.session_state["_live_rec_processed"] = True
-            try:
-                video_bytes = base64.b64decode(video_data)
-                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".webm")
-                tmp.write(video_bytes)
-                tmp.flush()
-                tmp.close()
-                st.success("✅ Recording received! Starting analysis…")
-                _run_analysis(tmp.name, lift_type, user)
-            except Exception as e:
-                st.error(f"Error processing recording: {e}")
-        elif not video_data:
-            # Component is idle / user clicked Retake — allow next submission
-            st.session_state["_live_rec_processed"] = False
+        st.markdown("##### True Real-Time Analysis")
+        st.markdown("Click **START** to turn on your webcam. The AI will draw the joints over your body instantly.")
+        
+        RTC_CONFIGURATION = RTCConfiguration(
+            {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+        )
+        
+        webrtc_streamer(
+            key="realtime-pose",
+            mode=1, # SENDRECV
+            rtc_configuration=RTC_CONFIGURATION,
+            video_transformer_factory=PoseVideoTransformer,
+            media_stream_constraints={"video": True, "audio": False},
+        )
+        
+        st.info("💡 Note: To save a session to your gallery, please use the **Upload Video** function instead. This Live Practice mode is strictly for real-time feedback.")
 
     # Show results from session state (persists across reruns)
     if st.session_state.get("last_analysis"):
