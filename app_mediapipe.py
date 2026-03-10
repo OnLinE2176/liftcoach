@@ -694,7 +694,7 @@ def page_home():
             <div class="user-row">
                 <div>
                     <strong>{s['lift_type']}</strong>
-                    <span style="color: var(--text-muted); font-size: 0.82rem; margin-left: 1rem;">{s['created_at'][:16]}</span>
+                    <span style="color: var(--text-muted); font-size: 0.82rem; margin-left: 1rem;">{str(s['created_at'])[:16]}</span>
                     <span style="color: var(--text-muted); font-size: 0.8rem; margin-left: 0.5rem;">— {fault_text}</span>
                 </div>
                 <span class="{verdict_class}">{s['verdict']}</span>
@@ -1702,7 +1702,7 @@ def page_super_admin():
                 ts = str(log["created_at"])[:19]
                 st.markdown(f"""
                 <div style="display:flex;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border-color);">
-                    <div style="min-width:140px;color:var(--text-muted);font-size:0.78rem;">{ts}</div>
+                    <div style="min-width:140px;color:var(--text-muted);font-size:0.78rem;">{str(log['created_at'])[:19]}</div>
                     <div style="min-width:100px;"><span style="background:rgba(124,58,237,0.1);color:{color};padding:0.2rem 0.6rem;border-radius:12px;font-size:0.78rem;font-weight:600;">{log['action']}</span></div>
                     <div style="min-width:100px;color:var(--text-primary);font-weight:500;font-size:0.85rem;">@{log['username']}</div>
                     <div style="flex:1;color:var(--text-muted);font-size:0.82rem;">{log.get('details', '')}</div>
