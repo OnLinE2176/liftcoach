@@ -918,7 +918,7 @@ def _display_results(user):
         session_data = db.get_user_sessions(user["id"])
         for s in session_data:
             if s["id"] == sid:
-                video_url = storage.get_video_url(s["video_path"])
+                video_url = storage.get_video_url(s.get("video_filename", ""))
                 break
     
     # Fallback to local
