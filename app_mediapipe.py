@@ -1062,9 +1062,11 @@ def page_gallery():
         st.markdown('<div class="glass-card" style="margin-bottom: 1rem;">', unsafe_allow_html=True)
         c1, c2, c3 = st.columns([2, 3, 1])
         with c1:
-            video_path = os.path.join(OUTPUT_DIR, item["video_filename"]) if item.get("video_filename") else None
-            if video_path and os.path.exists(video_path):
-                st.video(video_path)
+            video_url = storage.get_video_url(item.get("video_filename", ""))
+            if video_url and video_url.startswith("http"):
+                st.video(video_url)
+            elif video_url and os.path.exists(video_url):
+                st.video(video_url)
         with c2:
             faults = json.loads(item["faults_json"]) if item.get("faults_json") else []
             fault_str = ", ".join(faults) if faults else "No faults"
@@ -1114,9 +1116,11 @@ def _gallery_detail_view(user, gallery_id):
     with v_col:
         st.markdown('<div class="glass-card-static">', unsafe_allow_html=True)
         st.markdown("#### 📹 Analyzed Video")
-        video_path = os.path.join(OUTPUT_DIR, item["video_filename"]) if item.get("video_filename") else None
-        if video_path and os.path.exists(video_path):
-            st.video(video_path)
+        video_url = storage.get_video_url(item.get("video_filename", ""))
+        if video_url and video_url.startswith("http"):
+            st.video(video_url)
+        elif video_url and os.path.exists(video_url):
+            st.video(video_url)
         else:
             st.warning("Video file not available.")
         if item.get("notes"):
