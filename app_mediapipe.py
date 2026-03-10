@@ -806,31 +806,43 @@ def page_analyze():
         st.markdown("##### True Real-Time Analysis")
         st.markdown("Click **START** to turn on your webcam. The AI will draw the joints over your body instantly.")
         
-        # --- Use free public STUN servers for WebRTC ---
-        @st.cache_data
-        def get_ice_servers():
-            return [
-                {"urls": ["stun:stun.l.google.com:19302"]},
-                {"urls": ["stun:stun1.l.google.com:19302"]},
-                {"urls": ["stun:stun2.l.google.com:19302"]},
-                {"urls": ["stun:stun3.l.google.com:19302"]},
-                {"urls": ["stun:stun4.l.google.com:19302"]},
-            ]
+        # Initialize recording state flags in session
+        if "live_recording_finished" not in st.session_state:
+            st.session_state.live_recording_finished = False
             
-        RTC_CONFIGURATION = RTCConfiguration(
-            {"iceServers": get_ice_servers()}
-        )
-        
-        ctx = webrtc_streamer(
-            key="realtime-pose",
-            mode=WebRtcMode.SENDRECV,
-            rtc_configuration=RTC_CONFIGURATION,
-            video_processor_factory=PoseVideoProcessor,
-            media_stream_constraints={"video": True, "audio": False},
-        )
-        
-        if ctx.video_processor:
-            st.markdown("---")
+        if st.session_state.live_recording_finished:
+            st.success("✅ Live session recorded! View the analysis below.")
+            if st.button("🔄 Start New Live Session"):
+                st.session_state.live_recording_finished = False
+                for k in ["last_analysis", "last_session_id", "last_output_filename", "last_lift_type"]:
+                    st.session_state.pop(k, None)
+                st.rerun()
+        else:
+            # --- Use free public STUN servers for WebRTC ---
+            @st.cache_data
+            def get_ice_servers():
+                return [
+                    {"urls": ["stun:stun.l.google.com:19302"]},
+                    {"urls": ["stun:stun1.l.google.com:19302"]},
+                    {"urls": ["stun:stun2.l.google.com:19302"]},
+                    {"urls": ["stun:stun3.l.google.com:19302"]},
+                    {"urls": ["stun:stun4.l.google.com:19302"]},
+                ]
+                
+            RTC_CONFIGURATION = RTCConfiguration(
+                {"iceServers": get_ice_servers()}
+            )
+            
+            ctx = webrtc_streamer(
+                key="realtime-pose",
+                mode=WebRtcMode.SENDRECV,
+                rtc_configuration=RTC_CONFIGURATION,
+                video_processor_factory=PoseVideoProcessor,
+                media_stream_constraints={"video": True, "audio": False},
+            )
+            
+            if ctx.video_processor:
+                st.markdown("---")
             col1, col2 = st.columns([1, 1])
             with col1:
                 # Toggle recording state
@@ -859,6 +871,8 @@ def page_analyze():
                             for f in frames:
                                 writer.write(f)
                             writer.release()
+                            
+                            st.session_state.live_recording_finished = True
                             
                             # Pass to the existing analysis flow
                             _run_analysis(tmp_name, lift_type, user)
