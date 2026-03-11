@@ -396,6 +396,13 @@ class PoseVideoProcessor(VideoProcessorBase):
     def recv(self, frame):
         img = frame.to_ndarray(format="bgr24")
         
+        # Resize frame to reduce processing lag (improves framerate significantly)
+        target_width = 800
+        h, w = img.shape[:2]
+        if w > target_width:
+            scale = target_width / w
+            img = cv2.resize(img, (target_width, int(h * scale)))
+        
         # Determine framerate
         frame_rate = 30.0 # general estimate for webcam
         
@@ -838,7 +845,10 @@ def page_analyze():
                 mode=WebRtcMode.SENDRECV,
                 rtc_configuration=RTC_CONFIGURATION,
                 video_processor_factory=PoseVideoProcessor,
-                media_stream_constraints={"video": True, "audio": False},
+                media_stream_constraints={
+                    "video": {"width": {"ideal": 1280, "max": 1280}, "height": {"ideal": 720, "max": 720}, "frameRate": {"ideal": 30}},
+                    "audio": False
+                },
             )
             
             if ctx.video_processor:
