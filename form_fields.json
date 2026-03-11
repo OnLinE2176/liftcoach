@@ -1,0 +1,249 @@
+[
+  {
+    "title": "1. Overall, I am satisfied with how easy it is to use this system.",
+    "entry_id": "entry.1819953077",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "2. It was simple to use this system.",
+    "entry_id": "entry.1746957309",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "3. I was able to complete the tasks and scenarios quickly using this system.",
+    "entry_id": "entry.1892434222",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "4. I felt comfortable using this system.",
+    "entry_id": "entry.514324353",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "5. It was easy to learn to use this system.",
+    "entry_id": "entry.1284181239",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "6.  I believe I became productive quickly using this system.",
+    "entry_id": "entry.515189039",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "7.  The system gave error messages that clearly told me how to fix problems.",
+    "entry_id": "entry.819728170",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "8.  Whenever I made a mistake using the system, I could recover easily and quickly.",
+    "entry_id": "entry.314496334",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "9.  The information (such as on-screen messages, instructions, and feedback) provided by the system was clear.",
+    "entry_id": "entry.278583917",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "10.  It was easy to find the information I needed.",
+    "entry_id": "entry.590748082",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "11.  The information provided for the system was easy to understand.",
+    "entry_id": "entry.557981414",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "12.  The information was effective in helping me complete the tasks.",
+    "entry_id": "entry.1491888708",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "13. The organization of information on the system screens was clear.",
+    "entry_id": "entry.631912616",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "14. The interface of this system was pleasant.",
+    "entry_id": "entry.997173680",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "15.  I liked using the interface of this system.",
+    "entry_id": "entry.22055257",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "16.  The system has all the functions and capabilities I expect it to have.",
+    "entry_id": "entry.757162692",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "17.  Overall, I am satisfied with this system.",
+    "entry_id": "entry.1618454471",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "18.  I would feel confident using this system regularly.",
+    "entry_id": "entry.1610039425",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  },
+  {
+    "title": "19.  The system works the way I expect it to work.",
+    "entry_id": "entry.1396717161",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ]
+  }
+]
