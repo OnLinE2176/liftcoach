@@ -825,16 +825,29 @@ def page_analyze():
                     st.session_state.pop(k, None)
                 st.rerun()
         else:
-            # --- Use free public STUN servers for WebRTC ---
-            @st.cache_data
+            # --- Metered.ca TURN + STUN servers for reliable WebRTC ---
+            @st.cache_data(ttl=3600)  # Cache for 1 hour since TURN credentials rotate
             def get_ice_servers():
+                """Fetch TURN/STUN servers from Metered.ca API for NAT traversal."""
+                api_key = os.environ.get("METERED_API_KEY", "")
+                if api_key:
+                    try:
+                        import urllib.request, json as _json
+                        url = f"https://liftcoach.metered.live/api/v1/turn/credentials?apiKey={api_key}"
+                        req = urllib.request.Request(url, headers={"Accept": "application/json"})
+                        with urllib.request.urlopen(req, timeout=5) as resp:
+                            servers = _json.loads(resp.read().decode())
+                            if servers:
+                                return servers
+                    except Exception as e:
+                        import logging
+                        logging.getLogger(__name__).warning(f"Metered TURN API failed: {e}")
+                # Fallback to STUN-only (works on local/LAN but not through strict NAT)
                 return [
                     {"urls": ["stun:stun.l.google.com:19302"]},
                     {"urls": ["stun:stun1.l.google.com:19302"]},
-                    {"urls": ["stun:stun2.l.google.com:19302"]},
-                    {"urls": ["stun:stun3.l.google.com:19302"]},
-                    {"urls": ["stun:stun4.l.google.com:19302"]},
                 ]
+
                 
             RTC_CONFIGURATION = RTCConfiguration(
                 {"iceServers": get_ice_servers()}
