@@ -5,6 +5,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
     libxcb1 \
+    libx11-6 \
+    libxcb-xinerama0 \
+    libxcb-render0 \
+    libxkbcommon0 \
     libxext6 \
     libsm6 \
     libxrender1 \

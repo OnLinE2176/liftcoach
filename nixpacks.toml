@@ -3,12 +3,16 @@ aptPkgs = [
     "libgl1",
     "libglib2.0-0",
     "libxcb1",
+    "libx11-6",
+    "libxcb-xinerama0",
     "libxext6",
     "libsm6",
     "libxrender1",
     "libfontconfig1",
-    "libice6"
+    "libice6",
+    "ffmpeg"
 ]
 
 [start]
 cmd = "streamlit run app_mediapipe.py --server.port ${PORT:-8501} --server.address 0.0.0.0"
+
