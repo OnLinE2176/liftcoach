@@ -6,23 +6,23 @@ __pycache__/
 *.pyc
 
 # Analyzed videos and runtime logs
-output/
-logs/
+backend/output/
+backend/logs/
 
 # Local database
-liftcoach.db
+backend/liftcoach.db
 
 # ML model files (download separately — see README)
 *.pt
 
 # User-uploaded content
-profile_photos/
+backend/profile_photos/
 
 # Screenshots (local thesis captures)
 screenshots/
 
 # Backup files
-app copy.py
+backend/app copy.py
 
 # Environment variables
 .env

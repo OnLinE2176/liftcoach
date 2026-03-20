@@ -42,7 +42,7 @@ db.init_db()
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(APP_DIR, "pose_landmarker_lite.task")
 OUTPUT_DIR = os.path.join(APP_DIR, "output")
-CSS_PATH = os.path.join(APP_DIR, "style.css")
+CSS_PATH = os.path.join(APP_DIR, "..", "frontend", "style.css")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
